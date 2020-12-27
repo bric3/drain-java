@@ -32,6 +32,16 @@ application {
     mainClass.set("com.github.bric3.drain.App")
 }
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(11))
+    }
+}
+
+tasks.compileJava {
+    options.release.set(11)
+}
+
 tasks.test {
     // Use junit platform for unit tests.
     useJUnitPlatform()
