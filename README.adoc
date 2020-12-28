@@ -1,0 +1,17 @@
+= drain java
+
+I was inspired by a blog article from one of my colleague :
+
+=> https://sayr.us/log-pattern-recognition/logmine/
+
+I wanted to see if I could implement this in Java.
+I bootstrapped the code from a simple Java file tail follow, actually
+not really a tail since I'm reading all the file.
+
+Following the discussion we had, there is a few sources that
+could serve as inspiration:
+
+* https://logparser.readthedocs.io/
+* https://github.com/logpai/logparser
+* https://github.com/IBM/Drain3
+* https://jiemingzhu.github.io/pub/pjhe_icws2017.pdf
