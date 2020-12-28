@@ -1,6 +1,8 @@
 
 package com.github.bric3.drain;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -13,14 +15,15 @@ import java.nio.file.StandardOpenOption;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
+import java.util.Objects;
 
 public class TailFollow {
 
     public static final int ERR_NO_FILEPATH = 1;
-    private static final int ERR_IO_READING_FILE = 2;
+    private static final int ERR_IO_TAILING_FILE = 2;
     private static final int ERR_IO_WATCHING_FILE = 3;
-    private static final WritableByteChannel STDOUT = Channels.newChannel(System.out);
-    // Or if POSIX : Channels.newChannel(new FileOutputStream("/dev/stdout")) ?
+    private static final WritableByteChannel STDOUT = Channels.newChannel(System.out); // PrintStream(BufferedOutputStream(FileOutputStream))
+    // Or if POSIX : Channels.newChannel(new FileOutputStream("/dev/stdout")) to enable the system to perform zero copy?
 
 
     public static void main(String[] args) {
@@ -38,23 +41,25 @@ public class TailFollow {
         System.err.println(path);
 
 
-        long tailed = tail(path, 0);// first tail
+        try (var ws = FileSystems.getDefault().newWatchService();
+             var pathChannel = FileChannel.open(path, StandardOpenOption.READ)) {
+            var sink = STDOUT;
+            var tailed = tail(pathChannel, 0, sink);// first tail
 
-        try (var ws = FileSystems.getDefault().newWatchService()) {
-            WatchKey watchKey = path.getParent()
-                                    .register(ws, StandardWatchEventKinds.ENTRY_MODIFY);
+            path.getParent().register(ws, StandardWatchEventKinds.ENTRY_MODIFY);
 
             while (true) { // TODO cancel
                 var wk = ws.take();
                 for (WatchEvent<?> event : wk.pollEvents()) {
-                    Path changed = (Path) event.context();
-                    System.err.printf("%s%n", event.kind());
-
-                    if (changed.endsWith(path.getFileName().toString())) {
-                        tailed = tail(path, tailed);
+                    var changed = (Path) event.context();
+                    if (Objects.equals(changed, path.getFileName())) {
+                        tailed += tail(pathChannel, tailed, sink);
                     }
                 }
-                wk.reset();
+                var valid = wk.reset();
+                if(!valid) {
+                    break; // exit
+                }
             }
 
         } catch (IOException e) {
@@ -64,18 +69,17 @@ public class TailFollow {
             Thread.currentThread().interrupt();
             e.printStackTrace();
         }
-
     }
 
-    private static long tail(Path path, long startPosition) {
-        try (var pathChannel = FileChannel.open(path, StandardOpenOption.READ)) {
+    private static long tail(FileChannel pathChannel, long startPosition, WritableByteChannel sink) {
+        try {
             var fileSize = pathChannel.size();
 
-            return pathChannel.transferTo(startPosition, fileSize, STDOUT);
+            return pathChannel.transferTo(startPosition, fileSize, sink);
         } catch (IOException e) {
             e.printStackTrace(System.err);
-            System.exit(ERR_IO_READING_FILE);
+            System.exit(ERR_IO_TAILING_FILE);
+            return 0;
         }
-        return 0;
     }
 }
