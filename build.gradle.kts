@@ -2,7 +2,8 @@ import de.undercouch.gradle.tasks.download.Download
 
 plugins {
     application
-    id("de.undercouch.download") version("4.1.1")
+    id("de.undercouch.download") version ("4.1.1")
+    id("com.github.johnrengelman.shadow") version ("6.1.0")
 }
 
 repositories {
@@ -11,6 +12,8 @@ repositories {
 
 dependencies {
     implementation("com.google.guava:guava:30.1-jre")
+    implementation("info.picocli:picocli:4.6.1")
+    annotationProcessor("info.picocli:picocli-codegen:4.6.1")
 
     testImplementation("org.assertj:assertj-core:3.18.1")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
@@ -18,7 +21,8 @@ dependencies {
 }
 
 application {
-    mainClass.set("com.github.bric3.drain.TailFollow")
+    mainClass.set("com.github.bric3.drain.Main")
+    mainClassName = mainClass.get() // for shadow plugin
 }
 
 java {
@@ -27,7 +31,15 @@ java {
     }
 }
 
+group = "com.github.bric3.drain"
+version = "1.0-SNAPSHOT"
+
+
 tasks {
+    compileJava {
+        options.compilerArgs.add("-Aproject=${project.group}/${project.name}")
+    }
+
     withType(JavaCompile::class) {
         options.release.set(11)
     }
@@ -45,6 +57,16 @@ tasks {
 
     test {
         useJUnitPlatform()
+    }
+
+    jar {
+        manifest {
+            attributes(
+                    mapOf(
+                            "Main-Class" to application.mainClass.get()
+                    )
+            )
+        }
     }
 }
 
