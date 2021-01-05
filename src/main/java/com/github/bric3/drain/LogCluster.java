@@ -1,6 +1,7 @@
 package com.github.bric3.drain;
 
 import javax.annotation.Nonnull;
+import java.util.ArrayList;
 import java.util.List;
 
 public class LogCluster {
@@ -23,9 +24,36 @@ public class LogCluster {
         logTemplateTokens = newTemplateTokens;
     }
 
-    void newSighting() {
+    void newSighting(List<String> contentTokens) {
+        var newTemplateTokens = updateTemplate(contentTokens, logTemplateTokens);
+        if (!String.join(" ", newTemplateTokens).equals(String.join(" ", logTemplateTokens))) {
+            updateTokens(newTemplateTokens);
+        }
+
         sightings++;
     }
+
+    @Nonnull
+    List<String> updateTemplate(@Nonnull List<String> contentTokens,
+                                @Nonnull List<String> templateTokens) {
+        assert contentTokens.size() == templateTokens.size();
+        var newTemplate = new ArrayList<String>(contentTokens.size());
+
+        for (int i = 0, tokensSize = contentTokens.size(); i < tokensSize; i++) {
+            var contentToken = contentTokens.get(i);
+            var templateToken = templateTokens.get(i);
+            // TODO change to replace value at index
+            if (contentToken.equals(templateToken)) {
+                newTemplate.add(contentToken);
+            } else {
+                newTemplate.add(Drain.PARAM_MARKER); // replace contentToken by a marker
+            }
+
+        }
+
+        return newTemplate;
+    }
+
 
     public int sightings() {
         return sightings;

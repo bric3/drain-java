@@ -34,7 +34,7 @@ import java.util.List;
  * @license MIT
  */
 public class Drain {
-    private static final String PARAM_MARKER = "<*>";
+    static final String PARAM_MARKER = "<*>";
     public static final int ROOT_AND_LEAF_LEVELS = 2;
 
     /**
@@ -99,12 +99,7 @@ public class Drain {
             addSeqToPrefixTree(root, matchCluster);
         } else {
             // add the log to an existing cluster
-            // TODO move logic to LogCluster class
-            var newTemplateTokens = getTemplate(contentTokens, matchCluster.tokens());
-            if (!String.join(" ", newTemplateTokens).equals(String.join(" ", matchCluster.tokens()))) {
-                matchCluster.updateTokens(newTemplateTokens);
-            }
-            matchCluster.newSighting();
+            matchCluster.newSighting(contentTokens);
         }
     }
 
@@ -114,28 +109,6 @@ public class Drain {
                             .omitEmptyStrings()
                             .splitToList(content);
     }
-
-    @Nonnull
-    List<String> getTemplate(@Nonnull List<String> contentTokens,
-                             @Nonnull List<String> templateTokens) {
-        assert contentTokens.size() == templateTokens.size();
-        var newTemplate = new ArrayList<String>(contentTokens.size());
-
-        for (int i = 0, tokensSize = contentTokens.size(); i < tokensSize; i++) {
-            var contentToken = contentTokens.get(i);
-            var templateToken = templateTokens.get(i);
-            // TODO change to replace value at index
-            if (contentToken.equals(templateToken)) {
-                newTemplate.add(contentToken);
-            } else {
-                newTemplate.add(PARAM_MARKER); // replace contentToken by a marker
-            }
-
-        }
-
-        return newTemplate;
-    }
-
 
     private @Nullable
     LogCluster treeSearch(@Nonnull Node root,
