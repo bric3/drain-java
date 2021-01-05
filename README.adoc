@@ -1,17 +1,109 @@
 = drain java
 
-I was inspired by a blog article from one of my colleague :
+== Introduction
 
-=> https://sayr.us/log-pattern-recognition/logmine/
+drain-java is a continuous _log template miner_, for each log message it extracts
+tokens and group them into _clusters of tokens_. As new log messages are added,
+drain-java will identify similar token and update the cluster with the new template,
+or simply create a new token cluster. Each time a cluster is matched a counter is
+incremented.
 
-I wanted to see if I could implement this in Java.
-I bootstrapped the code from a simple Java file tail follow, actually
-not really a tail since I'm reading all the file.
+These clusters are stored in prefix tree, which is somewhat similar to a trie, but
+here the tree as a fixed depth in order to avoid long tree traversal.
+In avoiding deep trees this also helps to keep it balance.
 
-Following the discussion we had, there is a few sources that
-could serve as inspiration:
+== Usage
 
+Java 11 is required to run drain-java.
+
+.Minimal example
+[source, java]
+----
+var drain = Drain.drainBuilder()
+                .additionalDelimiters("_")
+                .depth(4)
+                .build()
+Files.lines(Paths.get("build/resources/test/SSH.log"),
+            StandardCharsets.UTF_8)
+     .forEach(drain::parseLogMessage);
+
+// do something with clusters
+drain.clusters();
+----
+
+
+.log pattern clusters and their occurences
+[source]
+----
+---- Done processing file. Total of 655147 lines, done in 1.588 s, 51 clusters <1>
+0010 (size 140768): Failed password for <*> from <*> port <*> ssh2 <2>
+0009 (size 140701): pam unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= <*> <*>
+0007 (size 68958): Connection closed by <*> [preauth]
+0008 (size 46642): Received disconnect from <*> 11: <*> <*> <*>
+0014 (size 37963): PAM service(sshd) ignoring max retries; <*> > 3
+0012 (size 37298): Disconnecting: Too many authentication failures for <*> [preauth]
+0013 (size 37029): PAM <*> more authentication <*> logname= uid=0 euid=0 tty=ssh ruser= <*> <*>
+0011 (size 36967): message repeated <*> times: [ Failed password for <*> from <*> port <*> ssh2]
+0006 (size 20241): Failed <*> for invalid user <*> from <*> port <*> ssh2
+0004 (size 19852): pam unix(sshd:auth): check pass; user unknown
+0001 (size 18909): reverse mapping checking getaddrinfo for <*> <*> failed - POSSIBLE BREAK-IN ATTEMPT!
+0002 (size 14551): Invalid user <*> from <*>
+0003 (size 14551): input userauth request: invalid user <*> [preauth]
+0005 (size 14356): pam unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= <*>
+0018 (size 1289): PAM <*> more authentication <*> logname= uid=0 euid=0 tty=ssh ruser= <*>
+0024 (size 952): fatal: Read from socket failed: Connection reset by peer [preauth]
+...
+----
+<1> 51 _types_ of logs were identified from 655147 lines in 1.588s
+<2> There was `140768` similar log messages with this pattern, with `3` positions
+where the token is identified as parameter `<*>`.
+
+On the same dataset, the java implementation performed roughly around 10 times faster.
+As my implementation does not yet have masking, mask configuration was removed in the
+Drain3 implementation.
+
+== Status
+
+Pieces of puzzle are coming in no particular order, I first bootstrapped the code from a simple Java
+file. Then I wrote in Java an implementation of Drain. Now here's what I would like to do.
+
+.Todo
+- [ ] More unit tests
+- [ ] Wire things together
+- [ ] More documentation
+- [ ] Implement _tail follow_ mode, currently whole file is read.
+- [ ] Implement log masking (e.g. log contain an email, or an IP address which may be considered as private data)
+
+.For later
+- [ ] Json message field extraction
+- [ ] How to handle prefixes : Dates, log level, etc. ; possibly using masking
+- [ ] Investigate marker with specific behavior, e.g. log level severity
+- [ ] Investigate log with stacktraces (likely multiline)
+- [ ] Improve handling of very long lines
+- [ ] Logback appender with micrometer counter
+
+== Motivation
+
+I was inspired by a https://sayr.us/log-pattern-recognition/logmine/[blog article from one of my colleague on LogMine],
+we were both impressed by the log pattern extraction of https://docs.datadoghq.com/logs/explorer/patterns/[Datadog's Log explorer],
+
+After some discussion together, we saw that Drain was a bit superior to LogMine.
+Googling Drain in Java didn't yield any result, but I certainly didn't search exhaustively,
+anyway this triggered the idea to implement this in Java.
+
+== References
+
+The Drain port is mostly a port of https://github.com/IBM/Drain3[Drain3]
+done by IBM folks (_David Ohana_, _Moshik Hershcovitch_). IBM's Drain3 is a fork of the
+https://github.com/logpai/logparser[original work] done by the LogPai team based on the paper of
+_Pinjia He_, _Jieming Zhu_, _Zibin Zheng_, and _Michael R. Lyu_.
+
+_I didn't follow up on other contributors of these projects, reach out if you think you have been omitted._
+
+
+For reference here's the linked I looked at:
 * https://logparser.readthedocs.io/
 * https://github.com/logpai/logparser
 * https://github.com/IBM/Drain3
 * https://jiemingzhu.github.io/pub/pjhe_icws2017.pdf
+(a copy of this publication accessible link:doc/pjhe_icws2017.pdf[there])
