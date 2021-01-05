@@ -34,8 +34,11 @@ import java.util.List;
  * @license MIT
  */
 public class Drain {
-    static final String PARAM_MARKER = "<*>";
-    public static final int ROOT_AND_LEAF_LEVELS = 2;
+    /**
+     * Marker for similar tokens
+     */
+    public static final String PARAM_MARKER = "<*>";
+    private static final int ROOT_AND_LEAF_LEVELS = 2;
 
     /**
      * Depth of all leaf nodes.
@@ -56,7 +59,7 @@ public class Drain {
 
     /**
      * Delimiters to apply when splitting log messages into words.
-     * <p>
+     *
      * In addition to whitespaces.
      */
     private final String additionalDelimiters;
@@ -167,7 +170,7 @@ public class Drain {
         LogCluster maxCluster = null;
 
         for (LogCluster cluster : clusters) {
-            var seqDistance = getSeqDistance(cluster.tokens(), logTokens);
+            var seqDistance = getSeqDistance(cluster.internalTokens(), logTokens);
             if (seqDistance.similarity > maxSimilarity
                 || (seqDistance.similarity == maxSimilarity && seqDistance.paramCount > maxParamCount)) {
                 maxSimilarity = seqDistance.similarity;
@@ -220,7 +223,7 @@ public class Drain {
 
     private void addSeqToPrefixTree(@Nonnull Node root,
                                     @Nonnull LogCluster newLogCluster) {
-        int tokenCount = newLogCluster.tokens().size();
+        int tokenCount = newLogCluster.internalTokens().size();
 
         var node = root.getOrCreateChild(tokenCount);
 
@@ -232,7 +235,7 @@ public class Drain {
 
 
         int currentDepth = 1;
-        for (String token : newLogCluster.tokens()) {
+        for (String token : newLogCluster.internalTokens()) {
 
             // Add current log cluster to the leaf node
             boolean atMaxDepth = currentDepth == depth;
@@ -280,6 +283,11 @@ public class Drain {
         return s.chars().anyMatch(Character::isDigit);
     }
 
+    /**
+     * Returns a list of the Log clusters.
+     *
+     * @return Non modifiable list of current clusters.
+     */
     public List<LogCluster> clusters() {
         return List.copyOf(clusters);
     }

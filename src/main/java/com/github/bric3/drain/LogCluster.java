@@ -4,6 +4,17 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Log cluster.
+ *
+ * It represents a tokenized logs where similar tokens are
+ * replaced by the marker {@link Drain#PARAM_MARKER}.
+ *
+ * @author brice.dutheil@gmail.com
+ * @modifiedBy david.ohana@ibm.com, moshikh@il.ibm.com
+ * @originalAuthor LogPAI team
+ * @license MIT
+ */
 public class LogCluster {
     private static int instanceCounter = 0;
 
@@ -16,6 +27,22 @@ public class LogCluster {
         this.logTemplateTokens = logTemplateTokens;
     }
 
+    /**
+     * The cluster identifier
+     * @return cluster identifier.
+     */
+    public int clusterId() {
+        return clusterId;
+    }
+
+    List<String> internalTokens() {
+        return logTemplateTokens;
+    }
+
+    /**
+     * List of the tokens for this LogCLuster
+     * @return Tokens of this cluster
+     */
     public List<String> tokens() {
         return logTemplateTokens;
     }
@@ -54,14 +81,17 @@ public class LogCluster {
         return newTemplate;
     }
 
-
+    /**
+     * The number of times a log with this pattern has been seen.
+     * @return sightings of similar logs.
+     */
     public int sightings() {
         return sightings;
     }
 
     @Override
     public String toString() {
-        return String.format("%04d (size=%d): %s",
+        return String.format("%04d (size %d): %s",
                              clusterId,
                              sightings,
                              String.join(" ", logTemplateTokens));
