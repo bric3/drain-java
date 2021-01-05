@@ -53,7 +53,7 @@ public class LogCluster {
 
     void newSighting(List<String> contentTokens) {
         var newTemplateTokens = updateTemplate(contentTokens, logTemplateTokens);
-        if (!String.join(" ", newTemplateTokens).equals(String.join(" ", logTemplateTokens))) {
+        if (!newTemplateTokens.equals(logTemplateTokens)) {
             updateTokens(newTemplateTokens);
         }
 
