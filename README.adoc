@@ -102,6 +102,7 @@ _I didn't follow up on other contributors of these projects, reach out if you th
 
 
 For reference here's the linked I looked at:
+
 * https://logparser.readthedocs.io/
 * https://github.com/logpai/logparser
 * https://github.com/IBM/Drain3

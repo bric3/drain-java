@@ -18,7 +18,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("com.github.bric3.drain.App")
+    mainClass.set("com.github.bric3.drain.TailFollow")
 }
 
 java {
