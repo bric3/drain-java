@@ -1,5 +1,6 @@
 package com.github.bric3.drain;
 
+import com.google.common.base.Stopwatch;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -22,6 +23,7 @@ class DrainBulkTest {
 
         var lineCounter = new AtomicInteger();
 
+        var stopwatch = Stopwatch.createStarted();
         Files.lines(Paths.get("build/resources/test/SSH.log"),
                     StandardCharsets.UTF_8)
              .peek(__ -> lineCounter.incrementAndGet())
@@ -33,6 +35,11 @@ class DrainBulkTest {
                  }
              });
 
+
+        System.out.printf("---- Done processing file. Total of %d lines, done in %s, %d clusters%n",
+                          lineCounter.get(),
+                          stopwatch,
+                          drain.clusters().size());
         drain.clusters()
              .stream()
              .sorted(Comparator.comparing(LogCluster::sightings).reversed())
@@ -101,6 +108,7 @@ A0051 (size 1): syslogin perform logout: logout() returned an error
 Java implementation:
 ====================
 
+---- Done processing file. Total of 655147 lines, done in 1.588 s, 51 clusters
 0010 (size 140768): Failed password for <*> from <*> port <*> ssh2
 0009 (size 140701): pam unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= <*> <*>
 0007 (size 68958): Connection closed by <*> [preauth]
