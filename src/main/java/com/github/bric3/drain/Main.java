@@ -30,14 +30,17 @@ public class Main implements Runnable {
             description = "Use DRAIN to extract log patterns")
     boolean drain;
 
+    @Option(names = {"--verbose"},
+            description = "Verbose output, mostly for DRAIN or errors")
+    boolean verbose;
 
 
     @Override
     public void run() {
-        if(drain) {
-            new DrainFile().drain(file);
+        if (drain) {
+            new DrainFile(verbose).drain(file);
         } else {
-            new TailFile().tail(file);
+            new TailFile(verbose).tail(file);
         }
 
     }

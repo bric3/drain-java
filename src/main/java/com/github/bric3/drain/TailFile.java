@@ -6,9 +6,7 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
@@ -16,26 +14,13 @@ import java.util.Objects;
 
 public class TailFile {
 
-    private static final WritableByteChannel STDOUT = Channels.newChannel(System.out); // PrintStream(BufferedOutputStream(FileOutputStream))
+    private static final WritableByteChannel STDOUT = Channels.newChannel(System.out);
+    // System.out = PrintStream(BufferedOutputStream(FileOutputStream))
     // Or if POSIX : Channels.newChannel(new FileOutputStream("/dev/stdout")) to enable the system to perform zero copy?
+    private final boolean verbose;
 
-
-    public static void main(String[] args) {
-        if (args.length != 1) {
-            System.err.println("Expects a file path to tail!");
-            System.exit(Main.ERR_NO_FILEPATH);
-        }
-
-        final Path path = Paths.get(args[0]);
-        if (!Files.isRegularFile(path)) {
-            System.err.println("Expects a file path to tail!");
-            System.exit(Main.ERR_NO_FILEPATH);
-        }
-
-        System.err.println(path);
-
-
-        new TailFile().tail(path);
+    public TailFile(boolean verbose) {
+        this.verbose = verbose;
     }
 
     public void tail(Path path) {
@@ -55,17 +40,21 @@ public class TailFile {
                     }
                 }
                 var valid = wk.reset();
-                if(!valid) {
+                if (!valid) {
                     break; // exit
                 }
             }
 
         } catch (IOException e) {
-            e.printStackTrace(System.err);
+            if (verbose) {
+                e.printStackTrace(System.err);
+            }
             System.exit(Main.ERR_IO_WATCHING_FILE);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            e.printStackTrace();
+            if(verbose) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -75,7 +64,9 @@ public class TailFile {
 
             return pathChannel.transferTo(startPosition, fileSize, sink);
         } catch (IOException e) {
-            e.printStackTrace(System.err);
+            if (verbose) {
+                e.printStackTrace(System.err);
+            }
             System.exit(Main.ERR_IO_TAILING_FILE);
             return 0;
         }
