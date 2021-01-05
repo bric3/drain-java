@@ -3,14 +3,14 @@ package com.github.bric3.drain;
 import javax.annotation.Nonnull;
 import java.util.List;
 
-class LogCluster {
+public class LogCluster {
     private static int instanceCounter = 0;
 
     private final int clusterId;
-    private int size = 1;
+    private int sightings = 1;
     private List<String> logTemplateTokens;
 
-    public LogCluster(@Nonnull List<String> logTemplateTokens) {
+    LogCluster(@Nonnull List<String> logTemplateTokens) {
         this.clusterId = ++instanceCounter;
         this.logTemplateTokens = logTemplateTokens;
     }
@@ -19,23 +19,23 @@ class LogCluster {
         return logTemplateTokens;
     }
 
-    public void updateTokens(List<String> newTemplateTokens) {
+    void updateTokens(List<String> newTemplateTokens) {
         logTemplateTokens = newTemplateTokens;
     }
 
-    public void newSighting() {
-        size++;
+    void newSighting() {
+        sightings++;
     }
 
     public int sightings() {
-        return size;
+        return sightings;
     }
 
     @Override
     public String toString() {
         return String.format("%04d (size=%d): %s",
                              clusterId,
-                             size,
+                             sightings,
                              String.join(" ", logTemplateTokens));
     }
 }
