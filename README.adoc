@@ -14,7 +14,7 @@ In avoiding deep trees this also helps to keep it balance.
 
 == Usage
 
-Java 11 is required to run drain-java.
+https://foojay.io/almanac/jdk-11/[Java 11] is required to run drain-java.
 
 .Minimal example
 [source, java]
