@@ -62,7 +62,7 @@ public class Drain {
      *
      * In addition to whitespaces.
      */
-    private final String additionalDelimiters;
+    private final String delimiters;
 
     /**
      * All log clusters.
@@ -78,7 +78,7 @@ public class Drain {
         this.depth = depth - ROOT_AND_LEAF_LEVELS;
         this.similarityThreshold = similarityThreshold;
         this.maxChildPerNode = maxChildPerNode;
-        this.additionalDelimiters = additionalDelimiters;
+        this.delimiters = " " + additionalDelimiters;
     }
 
     /**
@@ -93,13 +93,13 @@ public class Drain {
         var contentTokens = tokenize(message);
 
         // Search the prefix tree
-        var matchCluster = treeSearch(root, contentTokens);
+        var matchCluster = treeSearch(contentTokens);
 
         if (matchCluster == null) {
             // create cluster if it doesn't exists, using log content tokens as template tokens
             matchCluster = new LogCluster(contentTokens);
             clusters.add(matchCluster);
-            addSeqToPrefixTree(root, matchCluster);
+            addLogClusterToPrefixTree(matchCluster);
         } else {
             // add the log to an existing cluster
             matchCluster.newSighting(contentTokens);
@@ -107,19 +107,18 @@ public class Drain {
     }
 
     private List<String> tokenize(String content) {
-        return Splitter.on(CharMatcher.anyOf(" " + additionalDelimiters))
+        return Splitter.on(CharMatcher.anyOf(delimiters))
                             .trimResults()
                             .omitEmptyStrings()
                             .splitToList(content);
     }
 
     private @Nullable
-    LogCluster treeSearch(@Nonnull Node root,
-                          @Nonnull List<String> logTokens) {
+    LogCluster treeSearch(@Nonnull List<String> logTokens) {
 
         // at first level, children are grouped by token (word) count
         var tokensCount = logTokens.size();
-        var node = root.get(tokensCount);
+        var node = this.root.get(tokensCount);
 
         // the prefix tree is empty
         if (node == null) {
@@ -135,14 +134,13 @@ public class Drain {
         // a path of nodes matching the first N tokens (N=tree depth)
         int currentDepth = 1;
         for (String token : logTokens) {
-            // if max depth reached, bail out
-            if (currentDepth == this.depth) {
+            // if max depth reached or last parseable token, bail out
+            boolean atMaxDepth = currentDepth == this.depth;
+            boolean isLastToken = currentDepth == tokensCount;
+            if (atMaxDepth || isLastToken) {
                 break;
             }
-            // if last parseable token, bail out
-            if (currentDepth == tokensCount) {
-                break;
-            }
+
             // descend
             var nextNode = node.get(token);
             // if null try get from generic pattern
@@ -170,16 +168,17 @@ public class Drain {
         LogCluster maxCluster = null;
 
         for (LogCluster cluster : clusters) {
-            var seqDistance = getSeqDistance(cluster.internalTokens(), logTokens);
+            var seqDistance = computeSeqDistance(cluster.internalTokens(), logTokens);
             if (seqDistance.similarity > maxSimilarity
-                || (seqDistance.similarity == maxSimilarity && seqDistance.paramCount > maxParamCount)) {
+                || (seqDistance.similarity == maxSimilarity
+                    && seqDistance.paramCount > maxParamCount)) {
                 maxSimilarity = seqDistance.similarity;
                 maxParamCount = seqDistance.paramCount;
                 maxCluster = cluster;
             }
         }
 
-        if (maxSimilarity >= similarityThreshold) {
+        if (maxSimilarity >= this.similarityThreshold) {
             matchedCluster = maxCluster;
         }
 
@@ -196,9 +195,10 @@ public class Drain {
         }
 
     }
-    @Nonnull
-    SeqDistance getSeqDistance(@Nonnull List<String> templateTokens,
-                               @Nonnull List<String> logTokens) {
+
+    static @Nonnull
+    SeqDistance computeSeqDistance(@Nonnull List<String> templateTokens,
+                                   @Nonnull List<String> logTokens) {
         assert templateTokens.size() == logTokens.size();
 
         int similarTokens = 0;
@@ -221,14 +221,13 @@ public class Drain {
         return new SeqDistance(similarity, paramCount);
     }
 
-    private void addSeqToPrefixTree(@Nonnull Node root,
-                                    @Nonnull LogCluster newLogCluster) {
-        int tokenCount = newLogCluster.internalTokens().size();
+    private void addLogClusterToPrefixTree(@Nonnull LogCluster newLogCluster) {
+        int tokensCount = newLogCluster.internalTokens().size();
 
-        var node = root.getOrCreateChild(tokenCount);
+        var node = this.root.getOrCreateChild(tokensCount);
 
         // handle case of empty log message
-        if (tokenCount == 0) {
+        if (tokensCount == 0) {
             node.appendCluster(newLogCluster);
             return;
         }
@@ -238,8 +237,8 @@ public class Drain {
         for (String token : newLogCluster.internalTokens()) {
 
             // Add current log cluster to the leaf node
-            boolean atMaxDepth = currentDepth == depth;
-            boolean isLastToken = currentDepth == tokenCount;
+            boolean atMaxDepth = currentDepth == this.depth;
+            boolean isLastToken = currentDepth == tokensCount;
             if (atMaxDepth || isLastToken) {
                 node.appendCluster(newLogCluster);
                 break;
