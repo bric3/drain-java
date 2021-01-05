@@ -23,12 +23,19 @@ public class Main implements Runnable {
         System.exit(new CommandLine(new Main()).execute(args));
     }
 
-    @Parameters(description = "log file")
+    @Parameters(description = "log file",
+                paramLabel = "FILE")
     Path file;
 
     @Option(names = {"-d", "--drain"},
             description = "Use DRAIN to extract log patterns")
     boolean drain;
+
+    @Option(names = {"-n", "--lines"},
+            description = "output the last NUM lines, instead of the last 10;" +
+                          " or use -n 0 to output starting from beginning",
+            paramLabel = "NUM")
+    int tailLines = 10;
 
     @Option(names = {"--verbose"},
             description = "Verbose output, mostly for DRAIN or errors")
@@ -40,7 +47,7 @@ public class Main implements Runnable {
         if (drain) {
             new DrainFile(verbose).drain(file);
         } else {
-            new TailFile(verbose).tail(file);
+            new TailFile(verbose).tail(file, tailLines);
         }
 
     }

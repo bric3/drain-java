@@ -69,9 +69,11 @@ file. Then I wrote in Java an implementation of Drain. Now here's what I would l
 
 .Todo
 - [ ] More unit tests
-- [ ] Wire things together
+- [x] Wire things together
 - [ ] More documentation
-- [ ] Implement _tail follow_ mode, currently whole file is read.
+- [ ] Implement _tail follow_ mode (currently in drain mode the whole file is read and stops once finished)
+- [ ] In drain mode dump clusters on exit (e.g. for example when hitting `ctrl`+`c`)
+- [x] Start reading from the last x lines (like `tail -n 30`)
 - [ ] Implement log masking (e.g. log contain an email, or an IP address which may be considered as private data)
 
 .For later

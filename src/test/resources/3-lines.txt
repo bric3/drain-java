@@ -1,0 +1,3 @@
+parsed                        :ESC[?2004l
+bytes read                    :ESC[
+2021-01-05 20:48:34,044 [13366131]  ERROR - terminal.emulator.JediEmulator - Error processing OSC 1;java

@@ -23,11 +23,15 @@ public class TailFile {
         this.verbose = verbose;
     }
 
-    public void tail(Path path) {
+    public void tail(Path path, int tailLines) {
+        assert path != null;
+        assert tailLines >= 0;
         try (var ws = FileSystems.getDefault().newWatchService();
              var pathChannel = FileChannel.open(path, StandardOpenOption.READ)) {
             var sink = STDOUT;
-            var tailed = tail(pathChannel, 0, sink);// first tail
+
+            var startPosition = tailLines > 0 ? findTailStartPosition(pathChannel, tailLines) : 0;
+            var tailed = tail(pathChannel, startPosition, sink);// first tail
 
             path.getParent().register(ws, StandardWatchEventKinds.ENTRY_MODIFY);
 
@@ -52,13 +56,38 @@ public class TailFile {
             System.exit(Main.ERR_IO_WATCHING_FILE);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            if(verbose) {
+            if (verbose) {
                 e.printStackTrace();
             }
         }
     }
 
-    private long tail(FileChannel pathChannel, long startPosition, WritableByteChannel sink) {
+    long findTailStartPosition(FileChannel channel, int tailLines) throws IOException {
+        // straw man find start position
+        // this implementation hasn't been tested with two char line endings  (CR (0x0D) and LF (0x0A))
+        var buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
+
+        // go to end
+        buffer.position((int) channel.size());
+
+        int lineCounter = 0;
+        long i;
+        for (i = channel.size() - 1; i >= 0; i--) {
+            char c = (char) buffer.get((int) i);
+
+            if (c == '\n') { // on newline, reverse buffer
+                if (lineCounter == tailLines) {
+                    break;
+                }
+                lineCounter++;
+            }
+        }
+        return Math.max(i, 0);
+    }
+
+    long tail(FileChannel pathChannel, long startPosition, WritableByteChannel sink) {
+        assert pathChannel != null && sink != null;
+        assert startPosition >= 0;
         try {
             var fileSize = pathChannel.size();
 
