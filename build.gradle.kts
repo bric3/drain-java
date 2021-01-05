@@ -27,22 +27,26 @@ java {
     }
 }
 
-tasks.withType(JavaCompile::class) {
-    options.release.set(11)
+tasks {
+    withType(JavaCompile::class) {
+        options.release.set(11)
+    }
+
+    val downloadFile by registering(Download::class) {
+        src("https://zenodo.org/record/3227177/files/SSH.tar.gz")
+        dest(File(buildDir, "SSH.tar.gz"))
+        onlyIfModified(true)
+    }
+
+    processTestResources {
+        dependsOn(downloadFile)
+        from(tarTree(File(buildDir, "SSH.tar.gz")))
+    }
+
+    test {
+        useJUnitPlatform()
+    }
 }
 
-val downloadFile by tasks.registering(Download::class) {
-    src("https://zenodo.org/record/3227177/files/SSH.tar.gz")
-    dest(File(buildDir, "SSH.tar.gz"))
-    onlyIfModified(true)
-}
 
-tasks.processTestResources {
-    dependsOn(downloadFile)
-    from(tarTree(File(buildDir, "SSH.tar.gz")))
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
 
