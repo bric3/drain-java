@@ -5,6 +5,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 
@@ -12,7 +13,12 @@ import java.nio.file.Path;
         name = "tail",
         header = {"", "@|red tail - drain|@"},
         description = "...",
-        mixinStandardHelpOptions = true
+        mixinStandardHelpOptions = true,
+        version = {
+                "Versioned Command 1.0",
+                "Picocli " + picocli.CommandLine.VERSION,
+                "JVM: ${java.version} (${java.vendor} ${java.vm.name} ${java.vm.version})",
+                "OS: ${os.name} ${os.version} ${os.arch}"}
 )
 public class Main implements Runnable {
     public static final int ERR_NO_FILEPATH = 1;
@@ -44,6 +50,11 @@ public class Main implements Runnable {
 
     @Override
     public void run() {
+        if (!Files.isRegularFile(file)) {
+            System.err.println("Expects a file path to tail!");
+            System.exit(ERR_NO_FILEPATH);
+        }
+
         if (drain) {
             new DrainFile(verbose).drain(file);
         } else {
