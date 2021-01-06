@@ -24,16 +24,11 @@ jobs:
         wrapper-cache-enabled: true
         dependencies-cache-enabled : true
         configuration-cache-enabled : true
-    - uses: AutoModality/action-xunit-viewer@v1.2.0
-      id: xunit-viewer
-      name: XUnit Viewer
-      with :
-        results: build/reports/tests/test/index.html
-    - uses: actions/upload-artifact@v1
-      name: Attach the report
+    - uses: mikepenz/action-junit-report@v1
+      name: Publish Test Report
       with:
-        name: ${{ steps.xunit-viewer.outputs.report-name }}
-        path: ${{ steps.xunit-viewer.outputs.report-dir }}
+        report_paths: '**/build/test-results/test/TEST-*.xml'
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 
 
 #  publish-test-results:
