@@ -28,9 +28,13 @@ public class TailFile {
         assert tailLines >= 0;
         try (var ws = FileSystems.getDefault().newWatchService();
              var pathChannel = FileChannel.open(path, StandardOpenOption.READ)) {
-            var sink = STDOUT;
 
             var startPosition = tailLines > 0 ? findTailStartPosition(pathChannel, tailLines) : 0;
+            if(verbose) {
+                System.out.printf("Reading file from position : %d%n", startPosition);
+            }
+            
+            var sink = STDOUT;
             var tailed = tail(pathChannel, startPosition, sink);// first tail
 
             path.getParent().register(ws, StandardWatchEventKinds.ENTRY_MODIFY);
