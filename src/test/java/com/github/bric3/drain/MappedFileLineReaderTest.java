@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.CharBuffer;
 import java.nio.channels.Channels;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -20,21 +19,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MappedFileLineReaderTest {
     private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-//        var path = Path.of("/Users/bric3/Library/Logs/JetBrains/IntelliJIdea2020.3/idea.log");
 
     @Test
     void should_watch_with_line_reader(@TempDir Path tmpDir) throws IOException {
         var path = Files.createTempFile(tmpDir, "test", "log");
 
         var lineAppender = new LineAppender(path);
-
         var config = new Config(true);
 
-        try (var r = new MappedFileLineReader(config, new LineConsumer(line -> System.out.printf("%s%n", line)))) {
+        try (var r = new MappedFileLineReader(config, new LineConsumer(line -> {}, UTF_8))) {
             var future = scheduledExecutorService.scheduleAtFixedRate(lineAppender, 0, 400, TimeUnit.MILLISECONDS);
             scheduledExecutorService.schedule(() -> future.cancel(false), 4, TimeUnit.SECONDS);
             scheduledExecutorService.schedule(r::close, 10, TimeUnit.SECONDS);
@@ -90,10 +88,9 @@ class MappedFileLineReaderTest {
 
 
             try {
-                var encoded = StandardCharsets.UTF_8.newEncoder().encode(CharBuffer.wrap(sb));
+                var encoded = UTF_8.encode(CharBuffer.wrap(sb));
                 writtenBytes += encoded.capacity();
                 Files.write(path, encoded.array(), StandardOpenOption.APPEND);
-//                Files.writeString(path, sb, StandardCharsets.UTF_8, StandardOpenOption.APPEND);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }

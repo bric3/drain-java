@@ -8,9 +8,12 @@ import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,18 +21,18 @@ import java.util.function.Consumer;
 
 public class MappedFileLineReader implements Closeable {
 
-    private static Charset charset = StandardCharsets.UTF_8;
-    private static CharsetDecoder decoder = charset.newDecoder();
-    private IOReadAction readAction;
-    private Config config;
+    private final IOReadAction readAction;
+    private final Config config;
 
-    private AtomicBoolean closed = new AtomicBoolean(false);
-    private int wsPollTimeoutMs = 100;
+    private final AtomicBoolean closed;
+    private final int wsPollTimeoutMs;
     private long totalReadBytes;
 
     public MappedFileLineReader(Config config, IOReadAction readAction) {
         this.readAction = readAction;
         this.config = config;
+        this.wsPollTimeoutMs = 100;
+        this.closed = new AtomicBoolean(false);
     }
     
     public void watchPath(Path path, int tailLines) {
@@ -41,7 +44,7 @@ public class MappedFileLineReader implements Closeable {
              var sourceChannel = FileChannel.open(path, StandardOpenOption.READ)) {
             var startPosition = tailLines > 0 ? findTailStartPosition(sourceChannel, tailLines) : 0;
             if (config.verbose) {
-                System.out.printf("Reading file from position : %d%n", startPosition);
+                config.out.printf("Reading file from position : %d%n", startPosition);
             }
 
             var position = startPosition;
@@ -49,7 +52,7 @@ public class MappedFileLineReader implements Closeable {
             totalReadBytes += readBytes;
             position += readBytes;
             if (config.verbose) {
-                System.out.printf("File read: %d -> %d (%d bytes)%n",
+                config.out.printf("File read: %d -> %d (%d bytes)%n",
                                   startPosition,
                                   position,
                                   position - startPosition);
@@ -62,7 +65,7 @@ public class MappedFileLineReader implements Closeable {
                     wk = ws.poll(wsPollTimeoutMs, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e) {
                     if (config.verbose) {
-                        e.printStackTrace(System.err);
+                        e.printStackTrace(config.err);
                     }
                     Thread.currentThread().interrupt();
                     return;
@@ -79,7 +82,7 @@ public class MappedFileLineReader implements Closeable {
                         totalReadBytes += readBytes;
                         position += readBytes;
                         if (config.verbose) {
-                            System.out.printf("File read: %d -> %d (%d bytes)%n",
+                            config.out.printf("File read: %d -> %d (%d bytes)%n",
                                               previousPosition,
                                               position,
                                               position - previousPosition);
@@ -95,7 +98,7 @@ public class MappedFileLineReader implements Closeable {
 
             totalReadBytes = position - startPosition;
             if (config.verbose) {
-                System.out.printf("Total file read: %d -> %d (%d bytes)%n",
+                config.out.printf("Total file read: %d -> %d (%d bytes)%n",
                                   startPosition,
                                   position,
                                   totalReadBytes);
@@ -103,7 +106,7 @@ public class MappedFileLineReader implements Closeable {
 
         } catch (IOException e) {
             if (config.verbose) {
-                e.printStackTrace(System.err);
+                e.printStackTrace(config.err);
             }
             System.exit(Main.ERR_IO_TAILING_FILE);
         }
@@ -119,9 +122,11 @@ public class MappedFileLineReader implements Closeable {
 
     static class LineConsumer implements IOReadAction {
         private final Consumer<String> stringConsumer;
+        private Charset charset;
 
-        LineConsumer(Consumer<String> stringConsumer) {
+        LineConsumer(Consumer<String> stringConsumer, Charset charset) {
             this.stringConsumer = stringConsumer;
+            this.charset = charset;
         }
 
         @Override
