@@ -87,11 +87,13 @@ file. Then I wrote in Java an implementation of Drain. Now here's what I would l
 == Motivation
 
 I was inspired by a https://sayr.us/log-pattern-recognition/logmine/[blog article from one of my colleague on LogMine],
-we were both impressed by the log pattern extraction of https://docs.datadoghq.com/logs/explorer/patterns/[Datadog's Log explorer],
+-- many thanks to him for doing the initial research and explaining concepts --, we were both impressed by the log
+pattern extraction of https://docs.datadoghq.com/logs/explorer/patterns/[Datadog's Log explorer], his blog post
+sparked my interest.
 
 After some discussion together, we saw that Drain was a bit superior to LogMine.
-Googling Drain in Java didn't yield any result, but I certainly didn't search exhaustively,
-anyway this triggered the idea to implement this in Java.
+Googling Drain in Java didn't yield any result, although I certainly didn't search exhaustively,
+but regardless this triggered the idea to implement this algorithm in Java.
 
 == References
 
