@@ -35,7 +35,7 @@ public class MappedFileLineReader implements Closeable {
         this.closed = new AtomicBoolean(false);
     }
     
-    public void watchPath(Path path, int tailLines) {
+    public void tailRead(Path path, int tailLines, boolean follow) {
         assert path != null;
         assert tailLines >= 0;
 
@@ -52,53 +52,54 @@ public class MappedFileLineReader implements Closeable {
             totalReadBytes += readBytes;
             position += readBytes;
             if (config.verbose) {
-                config.out.printf("File read: %d -> %d (%d bytes)%n",
+                config.out.printf("Read: %d -> %d (%d bytes)%n",
                                   startPosition,
                                   position,
                                   position - startPosition);
             }
 
-            path.getParent().register(ws, StandardWatchEventKinds.ENTRY_MODIFY);
-            while (!closed.get()) { // TODO cancel
-                WatchKey wk;
-                try {
-                    wk = ws.poll(wsPollTimeoutMs, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    if (config.verbose) {
-                        e.printStackTrace(config.err);
-                    }
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-                if (wk == null) {
-                    continue;
-                }
-
-                for (WatchEvent<?> event : wk.pollEvents()) {
-                    if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY
-                        && Objects.equals(event.context(), path.getFileName())) {
-                        var previousPosition = position;
-                        readBytes = readAction.apply(sourceChannel, position);
-                        totalReadBytes += readBytes;
-                        position += readBytes;
+            if (follow) {
+                path.getParent().register(ws, StandardWatchEventKinds.ENTRY_MODIFY);
+                while (!closed.get()) { // TODO cancel
+                    WatchKey wk;
+                    try {
+                        wk = ws.poll(wsPollTimeoutMs, TimeUnit.MILLISECONDS);
+                    } catch (InterruptedException e) {
                         if (config.verbose) {
-                            config.out.printf("File read: %d -> %d (%d bytes)%n",
-                                              previousPosition,
-                                              position,
-                                              position - previousPosition);
+                            e.printStackTrace(config.err);
+                        }
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
+                    if (wk == null) {
+                        continue;
+                    }
+
+                    for (WatchEvent<?> event : wk.pollEvents()) {
+                        if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY
+                            && Objects.equals(event.context(), path.getFileName())) {
+                            var previousPosition = position;
+                            readBytes = readAction.apply(sourceChannel, position);
+                            totalReadBytes += readBytes;
+                            position += readBytes;
+                            if (config.verbose) {
+                                config.out.printf("Read: %d -> %d (%d bytes)%n",
+                                                  previousPosition,
+                                                  position,
+                                                  position - previousPosition);
+                            }
                         }
                     }
-                }
-                var valid = wk.reset();
-                if (!valid) {
-                    break; // exit
+                    var valid = wk.reset();
+                    if (!valid) {
+                        break; // exit
+                    }
                 }
             }
 
-
             totalReadBytes = position - startPosition;
             if (config.verbose) {
-                config.out.printf("Total file read: %d -> %d (%d bytes)%n",
+                config.out.printf("Total read: %d -> %d (%d bytes)%n",
                                   startPosition,
                                   position,
                                   totalReadBytes);
@@ -122,7 +123,7 @@ public class MappedFileLineReader implements Closeable {
 
     static class LineConsumer implements IOReadAction {
         private final Consumer<String> stringConsumer;
-        private Charset charset;
+        private final Charset charset;
 
         LineConsumer(Consumer<String> stringConsumer, Charset charset) {
             this.stringConsumer = stringConsumer;

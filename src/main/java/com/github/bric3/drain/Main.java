@@ -37,6 +37,18 @@ public class Main implements Runnable {
             description = "Use DRAIN to extract log patterns")
     boolean drain;
 
+    @Option(names = {"--rstrip-after"},
+            description = "Use DRAIN to extract log patterns")
+    String rstripAfter = "";
+
+    @Option(names = {"--rstrip-up-to"},
+            description = "Use DRAIN to extract log patterns")
+    int rstripUpTo = 0;
+
+    @Option(names = {"-f", "--follow"},
+            description = "output appended data as the file grows")
+    boolean follow;
+
     @Option(names = {"-n", "--lines"},
             description = "output the last NUM lines, instead of the last 10;" +
                           " or use -n 0 to output starting from beginning",
@@ -59,10 +71,10 @@ public class Main implements Runnable {
             System.exit(ERR_NO_FILEPATH);
         }
 
-        if (experimental) {
-            MappedFileLineReader.main(null);
-        } else if (drain) {
-            new DrainFile(verbose).drain(file);
+        var config = new Config(verbose, rstripAfter, rstripUpTo);
+
+        if (drain) {
+            new DrainFile(config).drain(file, tailLines, follow);
         } else {
             new TailFile(verbose).tail(file, tailLines);
         }

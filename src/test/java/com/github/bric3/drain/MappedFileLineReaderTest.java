@@ -23,7 +23,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MappedFileLineReaderTest {
-    private ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @Test
     void should_watch_with_line_reader(@TempDir Path tmpDir) throws IOException {
@@ -33,11 +33,11 @@ class MappedFileLineReaderTest {
         var config = new Config(true);
 
         try (var r = new MappedFileLineReader(config, new LineConsumer(line -> {}, UTF_8))) {
-            var future = scheduledExecutorService.scheduleAtFixedRate(lineAppender, 0, 400, TimeUnit.MILLISECONDS);
-            scheduledExecutorService.schedule(() -> future.cancel(false), 4, TimeUnit.SECONDS);
-            scheduledExecutorService.schedule(r::close, 10, TimeUnit.SECONDS);
+            var future = scheduler.scheduleAtFixedRate(lineAppender, 0, 400, TimeUnit.MILLISECONDS);
+            scheduler.schedule(() -> future.cancel(false), 4, TimeUnit.SECONDS);
+            scheduler.schedule(r::close, 10, TimeUnit.SECONDS);
 
-            r.watchPath(path, 0);
+            r.tailRead(path, 0, true);
 
             assertThat(r.totalReadBytes()).isEqualTo(lineAppender.writtenBytes);
         }
@@ -52,11 +52,11 @@ class MappedFileLineReaderTest {
 
         var out = new ByteArrayOutputStream();
         try (var r = new MappedFileLineReader(config, new ChannelSink(Channels.newChannel(out)))) {
-            var future = scheduledExecutorService.scheduleAtFixedRate(lineAppender, 0, 400, TimeUnit.MILLISECONDS);
-            scheduledExecutorService.schedule(() -> future.cancel(false), 4, TimeUnit.SECONDS);
-            scheduledExecutorService.schedule(r::close, 10, TimeUnit.SECONDS);
+            var future = scheduler.scheduleAtFixedRate(lineAppender, 0, 400, TimeUnit.MILLISECONDS);
+            scheduler.schedule(() -> future.cancel(false), 4, TimeUnit.SECONDS);
+            scheduler.schedule(r::close, 10, TimeUnit.SECONDS);
 
-            r.watchPath(path, 0);
+            r.tailRead(path, 0, true);
 
             assertThat(r.totalReadBytes()).isEqualTo(lineAppender.writtenBytes);
             assertThat(path.toFile()).hasBinaryContent(out.toByteArray());
@@ -65,7 +65,7 @@ class MappedFileLineReaderTest {
 
     @AfterEach
     void tearDown() {
-        scheduledExecutorService.shutdown();
+        scheduler.shutdown();
     }
 
     static class LineAppender implements Runnable {
