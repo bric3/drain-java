@@ -1,5 +1,7 @@
 = drain java
 
+image:https://github.com/bric3/drain-java/workflows/Build/badge.svg[]
+
 == Introduction
 
 drain-java is a continuous _log template miner_, for each log message it extracts

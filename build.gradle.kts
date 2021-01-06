@@ -57,6 +57,10 @@ tasks {
 
     test {
         useJUnitPlatform()
+        reports {
+            junitXml.setEnabled(true)
+            html.setEnabled(true)
+        }
     }
 
     jar {
