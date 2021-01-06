@@ -5,21 +5,25 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 public class MappedFileLineReader {
 
     private static Charset charset = StandardCharsets.UTF_8;
     private static CharsetDecoder decoder = charset.newDecoder();
-    private boolean verbose;
+    private IOReadAction readAction;
+    private Config config;
 
-    public MappedFileLineReader(boolean verbose) {
-        this.verbose = verbose;
+
+    public MappedFileLineReader(Config config, IOReadAction readAction) {
+        this.readAction = readAction;
+        this.config = config;
     }
 
 
@@ -28,37 +32,70 @@ public class MappedFileLineReader {
 
         Consumer<String> lineConsumer = line -> System.out.printf("==> %s%n", line);
 
-        new MappedFileLineReader(true).channelWatcher(path, 10, new LineConsumer(lineConsumer));
+        Config config = new Config(true);
+        System.out.printf("%s%n", "with line reader");
+        new MappedFileLineReader(config, new LineConsumer(lineConsumer)).watchPath(path, 10);
+        System.out.printf("%s%n", "with channel sink");
+        new MappedFileLineReader(config, new ChannelSink(Channels.newChannel(System.out))).watchPath(path, 10);
     }
 
-    private void channelWatcher(Path path, int tailLines, IOReadAction ioReadAction) throws IOException {
+    private void watchPath(Path path, int tailLines) {
         assert path != null;
         assert tailLines >= 0;
 
-        try (var sourceChannel = FileChannel.open(path, StandardOpenOption.READ)) {
+        
+        try (var ws = FileSystems.getDefault().newWatchService();
+             var sourceChannel = FileChannel.open(path, StandardOpenOption.READ)) {
             var startPosition = tailLines > 0 ? findTailStartPosition(sourceChannel, tailLines) : 0;
-            if (verbose) {
+            if (config.verbose) {
                 System.out.printf("Reading file from position : %d%n", startPosition);
             }
 
-            var newPosition = ioReadAction.readAction(sourceChannel, startPosition);
+            var newPosition = readAction.apply(sourceChannel, startPosition);
 
-            if (verbose) {
+            path.getParent().register(ws, StandardWatchEventKinds.ENTRY_MODIFY);
+
+            while (true) { // TODO cancel
+                var wk = ws.take();
+                for (WatchEvent<?> event : wk.pollEvents()) {
+                    var changed = (Path) event.context();
+                    if (Objects.equals(changed, path.getFileName())) {
+                        newPosition = readAction.apply(sourceChannel, startPosition);
+                    }
+                }
+                var valid = wk.reset();
+                if (!valid) {
+                    break; // exit
+                }
+            }
+
+
+            if (config.verbose) {
                 System.out.printf("Read file up to position : %d%n", newPosition);
             }
 
+        } catch (IOException e) {
+            if (config.verbose) {
+                e.printStackTrace(System.err);
+            }
+            System.exit(Main.ERR_IO_TAILING_FILE);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            if (config.verbose) {
+                e.printStackTrace(System.err);
+            }
         }
     }
 
     static class LineConsumer implements IOReadAction {
-        private Consumer<String> stringConsumer;
+        private final Consumer<String> stringConsumer;
 
         LineConsumer(Consumer<String> stringConsumer) {
             this.stringConsumer = stringConsumer;
         }
 
         @Override
-        public long readAction(FileChannel fileChannel, long startPosition) throws IOException {
+        public long apply(FileChannel fileChannel, long startPosition) throws IOException {
             return readByLines(fileChannel,
                                startPosition,
                                stringConsumer);
@@ -92,7 +129,6 @@ public class MappedFileLineReader {
                       throw new UncheckedIOException(ex);
                   }
               })
-              .skip(1)
               .forEach(stringConsumer);
 
 //            // option 3.b
@@ -103,6 +139,30 @@ public class MappedFileLineReader {
 //                line = br.readLine();
 //            }
             return sourceChannel.position();
+        }
+    }
+
+    static class ChannelSink implements IOReadAction {
+        private final WritableByteChannel sink;
+
+        public ChannelSink(WritableByteChannel sink) {
+            this.sink = sink;
+        }
+
+
+        @Override
+        public long apply(FileChannel fileChannel, long startPosition) throws IOException {
+            return tail(fileChannel, startPosition, sink);
+        }
+
+        long tail(FileChannel pathChannel,
+                  long startPosition,
+                  WritableByteChannel sink) throws IOException {
+            assert pathChannel != null && sink != null;
+            assert startPosition >= 0;
+            var fileSize = pathChannel.size();
+
+            return pathChannel.transferTo(startPosition, fileSize, sink);
         }
     }
 
@@ -131,6 +191,6 @@ public class MappedFileLineReader {
 
 
     interface IOReadAction {
-        long readAction(FileChannel fileChannel, long startPosition) throws IOException;
+        long apply(FileChannel fileChannel, long startPosition) throws IOException;
     }
 }
