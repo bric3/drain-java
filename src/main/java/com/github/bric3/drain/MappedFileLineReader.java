@@ -3,7 +3,6 @@ package com.github.bric3.drain;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.nio.MappedByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
@@ -27,27 +26,46 @@ public class MappedFileLineReader {
     public static void main(String[] args) throws IOException {
         var path = Path.of("/Users/bric3/Library/Logs/JetBrains/IntelliJIdea2020.3/idea.log");
 
-        Consumer<String> stringConsumer = line -> System.out.printf("==> %s%n", line);
+        Consumer<String> lineConsumer = line -> System.out.printf("==> %s%n", line);
 
-        new MappedFileLineReader(true).channelWatcher(path, 10, stringConsumer);
+        new MappedFileLineReader(true).channelWatcher(path, 10, new LineConsumer(lineConsumer));
     }
 
-    private void channelWatcher(Path path, int tailLines, Consumer<String> stringConsumer) throws IOException {
+    private void channelWatcher(Path path, int tailLines, IOReadAction ioReadAction) throws IOException {
         assert path != null;
         assert tailLines >= 0;
 
         try (var sourceChannel = FileChannel.open(path, StandardOpenOption.READ)) {
             var startPosition = tailLines > 0 ? findTailStartPosition(sourceChannel, tailLines) : 0;
-            if(verbose) {
+            if (verbose) {
                 System.out.printf("Reading file from position : %d%n", startPosition);
             }
 
-            readByLines(sourceChannel, startPosition, stringConsumer);
+            var newPosition = ioReadAction.readAction(sourceChannel, startPosition);
+
+            if (verbose) {
+                System.out.printf("Read file up to position : %d%n", newPosition);
+            }
+
         }
     }
 
-    private long readByLines(FileChannel sourceChannel, long startPosition, Consumer<String> stringConsumer) throws IOException {
-        //            // option 1
+    static class LineConsumer implements IOReadAction {
+        private Consumer<String> stringConsumer;
+
+        LineConsumer(Consumer<String> stringConsumer) {
+            this.stringConsumer = stringConsumer;
+        }
+
+        @Override
+        public long readAction(FileChannel fileChannel, long startPosition) throws IOException {
+            return readByLines(fileChannel,
+                               startPosition,
+                               stringConsumer);
+        }
+
+        private long readByLines(FileChannel sourceChannel, long startPosition, Consumer<String> stringConsumer) throws IOException {
+//            // option 1
 //            ByteBuffer buffer = ByteBuffer.allocate(1024);
 //            while (sourceChannel.read(buffer) != -1) {
 //                buffer.flip();
@@ -59,24 +77,23 @@ public class MappedFileLineReader {
 //            MappedByteBuffer bb = sourceChannel.map(FileChannel.MapMode.READ_ONLY, 0, (int) sourceChannel.size()); // possible oom on big files
 //            CharBuffer cb = decoder.decode(bb);
 
-        // option 3
-        var reader = Channels.newReader(sourceChannel, charset);  // investigate decoder customization
-        var br = new BufferedReader(reader); // handles new lines and EOF
+            // option 3
+            var reader = Channels.newReader(sourceChannel, charset);  // investigate decoder customization
+            var br = new BufferedReader(reader); // handles new lines and EOF
 
-        // option 3.a
-        br.skip(startPosition); // read the whole file (in private method fill())
-        br.lines()
-          .onClose(() -> {
-              try {
-                  br.close();
-              } catch (IOException ex) {
-                  throw new UncheckedIOException(ex);
-              }
-          })
-          .skip(1)
-          .forEach(stringConsumer);
-
-
+            // option 3.a
+//        br.skip(startPosition); // read the whole file (in private method fill())
+            sourceChannel.position(startPosition); // avoid reading the file if unecessary
+            br.lines()
+              .onClose(() -> {
+                  try {
+                      br.close();
+                  } catch (IOException ex) {
+                      throw new UncheckedIOException(ex);
+                  }
+              })
+              .skip(1)
+              .forEach(stringConsumer);
 
 //            // option 3.b
 //            br.skip(startPosition);
@@ -85,6 +102,8 @@ public class MappedFileLineReader {
 //                stringConsumer.accept(line + "\\r\\n");
 //                line = br.readLine();
 //            }
+            return sourceChannel.position();
+        }
     }
 
     long findTailStartPosition(FileChannel channel, int tailLines) throws IOException {
@@ -110,4 +129,8 @@ public class MappedFileLineReader {
         return Math.max(i, 0);
     }
 
+
+    interface IOReadAction {
+        long readAction(FileChannel fileChannel, long startPosition) throws IOException;
+    }
 }
