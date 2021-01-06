@@ -11,10 +11,12 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         experimental: [false]
         include:
           - os: windows-latest
+            experimental: true
+          - os: macos-latest
             experimental: true
     runs-on: ${{ matrix.os }}
     steps:
