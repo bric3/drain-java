@@ -42,21 +42,19 @@ public class MappedFileLineReader implements Closeable {
         var scheduledExecutorService = Executors.newScheduledThreadPool(1);
         System.out.printf("* %s%n", "with line reader");
         try (var mappedFileLineReader = new MappedFileLineReader(config, new LineConsumer(lineConsumer))) {
-            scheduledExecutorService.schedule(mappedFileLineReader::close, 5, TimeUnit.SECONDS);
+            scheduledExecutorService.schedule(mappedFileLineReader::close, 1, TimeUnit.MINUTES);
             mappedFileLineReader.watchPath(path, 10);
         }
         System.out.printf("* %s%n", "with channel sink");
         try (var mappedFileChannelSink = new MappedFileLineReader(config, new ChannelSink(Channels.newChannel(System.out)))) {
-            scheduledExecutorService.schedule(mappedFileChannelSink::close, 5, TimeUnit.SECONDS);
+            scheduledExecutorService.schedule(mappedFileChannelSink::close, 1, TimeUnit.MINUTES);
             mappedFileChannelSink.watchPath(path, 10);
         }
         System.out.printf("it's over");
+        System.exit(0);
     }
 
     public void close() {
-        if (config.verbose) {
-            System.out.println("Closing watcher");
-        }
         closed.set(true);
     }
 
@@ -74,6 +72,12 @@ public class MappedFileLineReader implements Closeable {
 
             var position = startPosition;
             position += readAction.apply(sourceChannel, startPosition);
+            if (config.verbose) {
+                System.out.printf("File read: %d -> %d (%d bytes)%n",
+                                  startPosition,
+                                  position,
+                                  position - startPosition);
+            }
 
             path.getParent().register(ws, StandardWatchEventKinds.ENTRY_MODIFY);
             while (!closed.get()) { // TODO cancel
@@ -94,7 +98,14 @@ public class MappedFileLineReader implements Closeable {
                 for (WatchEvent<?> event : wk.pollEvents()) {
                     if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY
                         && Objects.equals(event.context(), path.getFileName())) {
+                        var previousPosition = position;
                         position += readAction.apply(sourceChannel, position);
+                        if (config.verbose) {
+                            System.out.printf("File read: %d -> %d (%d bytes)%n",
+                                              previousPosition,
+                                              position,
+                                              position - previousPosition);
+                        }
                     }
                 }
                 var valid = wk.reset();
@@ -105,7 +116,10 @@ public class MappedFileLineReader implements Closeable {
 
 
             if (config.verbose) {
-                System.out.printf("Read file up to position : %d%n", position);
+                System.out.printf("Total file read: %d -> %d (%d bytes)%n",
+                                  startPosition,
+                                  position,
+                                  position - startPosition);
             }
 
         } catch (IOException e) {
