@@ -16,25 +16,67 @@ In avoiding deep trees this also helps to keep it balance.
 
 https://foojay.io/almanac/jdk-11/[Java 11] is required to run drain-java.
 
-.Minimal example
-[source, java]
-----
-var drain = Drain.drainBuilder()
-                .additionalDelimiters("_")
-                .depth(4)
-                .build()
-Files.lines(Paths.get("build/resources/test/SSH.log"),
-            StandardCharsets.UTF_8)
-     .forEach(drain::parseLogMessage);
+=== From command line
 
-// do something with clusters
-drain.clusters();
+Since this tool is not yet released the tool needs to be built locally.
+Also the built jar is not yet super user-friendly. Also options could change.
+
+.example usage
+[source, shell]
+----
+$ ./gradlew build
+$ java -jar build/libs/drain-java-1.0-SNAPSHOT-all.jar -h
+
+tail - drain
+Usage: tail [-dfhV] [--verbose] [-n=NUM]
+            [--parse-after-str=FIXED_STRING_SEPARATOR]
+            [--parser-after-col=COLUMN] FILE
+...
+      FILE          log file
+  -d, --drain       use DRAIN to extract log patterns
+  -f, --follow      output appended data as the file grows
+  -h, --help        Show this help message and exit.
+  -n, --lines=NUM   output the last NUM lines, instead of the last 10; or use
+                      -n 0 to output starting from beginning
+      --parse-after-str=FIXED_STRING_SEPARATOR
+                    when using DRAIN remove the left part of a log line up to
+                      after the FIXED_STRING_SEPARATOR
+      --parser-after-col=COLUMN
+                    when using DRAIN remove the left part of a log line up to
+                      COLUMN
+  -V, --version     Print version information and exit.
+      --verbose     Verbose output, mostly for DRAIN or errors
+$ java -jar build/libs/drain-java-1.0-SNAPSHOT-all.jar --version
+Versioned Command 1.0
+Picocli 4.6.1
+JVM: 11.0.9 (Amazon.com Inc. OpenJDK 64-Bit Server VM 11.0.9+11-LTS)
+OS: Mac OS X 10.16 x86_64
 ----
 
+By default, the tool act similarly to `tail`, and it will output the file to the stdout.
+The tool can _follow_ a file if the `--follow` option is passed.
+However, when run with the `--drain` this tool will classify log lines using DRAIN, and will
+output identified clusters.
+
+On the SSH log data set we can use it this way.
+
+[source, shell]
+----
+$ java -jar build/libs/drain-java-1.0-SNAPSHOT-all.jar \
+  -d \ <1>
+  -n 0 \ <2>
+  --parse-after-str "]: " <3>
+  build/resources/test/SSH.log <4>
+----
+<1> Identify patterns in the log
+<2> Starts from the beginning of the file (otherwise it starts from the last 10 lines)
+<3> Remove the left part of log line (`Dec 10 06:55:46 LabSZ sshd[24200]: `), ie effectively
+ignoring some variable elements like the time.
+<4> The log file
 
 .log pattern clusters and their occurences
 [source]
-----
+--------
 ---- Done processing file. Total of 655147 lines, done in 1.588 s, 51 clusters <1>
 0010 (size 140768): Failed password for <*> from <*> port <*> ssh2 <2>
 0009 (size 140701): pam unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= <*> <*>
@@ -53,7 +95,7 @@ drain.clusters();
 0018 (size 1289): PAM <*> more authentication <*> logname= uid=0 euid=0 tty=ssh ruser= <*>
 0024 (size 952): fatal: Read from socket failed: Connection reset by peer [preauth]
 ...
-----
+--------
 <1> 51 _types_ of logs were identified from 655147 lines in 1.588s
 <2> There was `140768` similar log messages with this pattern, with `3` positions
 where the token is identified as parameter `<*>`.
@@ -61,6 +103,28 @@ where the token is identified as parameter `<*>`.
 On the same dataset, the java implementation performed roughly around 10 times faster.
 As my implementation does not yet have masking, mask configuration was removed in the
 Drain3 implementation.
+
+=== From Java
+
+This tool is not yet intended to be used as a library, but for the curious
+the DRAIN algorythm can be used this way:
+
+.Minimal DRAIN example
+[source, java]
+----
+var drain = Drain.drainBuilder()
+                 .additionalDelimiters("_")
+                 .depth(4)
+                 .build()
+Files.lines(Paths.get("build/resources/test/SSH.log"),
+            StandardCharsets.UTF_8)
+     .forEach(drain::parseLogMessage);
+
+// do something with clusters
+drain.clusters();
+----
+
+
 
 == Status
 
@@ -71,8 +135,8 @@ file. Then I wrote in Java an implementation of Drain. Now here's what I would l
 - [ ] More unit tests
 - [x] Wire things together
 - [ ] More documentation
-- [ ] Implement _tail follow_ mode (currently in drain mode the whole file is read and stops once finished)
-- [ ] In drain mode dump clusters on exit (e.g. for example when hitting `ctrl`+`c`)
+- [x] Implement _tail follow_ mode (currently in drain mode the whole file is read and stops once finished)
+- [ ] In follow drain mode dump clusters on forced exit (e.g. for example when hitting `ctrl`+`c`)
 - [x] Start reading from the last x lines (like `tail -n 30`)
 - [ ] Implement log masking (e.g. log contain an email, or an IP address which may be considered as private data)
 
@@ -87,11 +151,13 @@ file. Then I wrote in Java an implementation of Drain. Now here's what I would l
 == Motivation
 
 I was inspired by a https://sayr.us/log-pattern-recognition/logmine/[blog article from one of my colleague on LogMine],
-we were both impressed by the log pattern extraction of https://docs.datadoghq.com/logs/explorer/patterns/[Datadog's Log explorer],
+-- many thanks to him for doing the initial research and explaining concepts --, we were both impressed by the log
+pattern extraction of https://docs.datadoghq.com/logs/explorer/patterns/[Datadog's Log explorer], his blog post
+sparked my interest.
 
 After some discussion together, we saw that Drain was a bit superior to LogMine.
-Googling Drain in Java didn't yield any result, but I certainly didn't search exhaustively,
-anyway this triggered the idea to implement this in Java.
+Googling Drain in Java didn't yield any result, although I certainly didn't search exhaustively,
+but regardless this triggered the idea to implement this algorithm in Java.
 
 == References
 

@@ -34,8 +34,23 @@ public class Main implements Runnable {
     Path file;
 
     @Option(names = {"-d", "--drain"},
-            description = "Use DRAIN to extract log patterns")
+            description = "use DRAIN to extract log patterns")
     boolean drain;
+
+    @Option(names = {"--parse-after-str"},
+            description = "when using DRAIN remove the left part of a log line up" +
+                          " to after the FIXED_STRING_SEPARATOR",
+            paramLabel = "FIXED_STRING_SEPARATOR")
+    String parseAfterStr = "";
+
+    @Option(names = {"--parser-after-col"},
+            description = "when using DRAIN remove the left part of a log line up to COLUMN",
+            paramLabel = "COLUMN")
+    int parseAfterCol = 0;
+
+    @Option(names = {"-f", "--follow"},
+            description = "output appended data as the file grows")
+    boolean follow;
 
     @Option(names = {"-n", "--lines"},
             description = "output the last NUM lines, instead of the last 10;" +
@@ -47,6 +62,10 @@ public class Main implements Runnable {
             description = "Verbose output, mostly for DRAIN or errors")
     boolean verbose;
 
+    @Option(names = {"-e"},
+            description = "Experimental code",
+            hidden = true)
+    boolean experimental;
 
     @Override
     public void run() {
@@ -55,10 +74,12 @@ public class Main implements Runnable {
             System.exit(ERR_NO_FILEPATH);
         }
 
+        var config = new Config(verbose, parseAfterStr, parseAfterCol);
+
         if (drain) {
-            new DrainFile(verbose).drain(file);
+            new DrainFile(config).drain(file, tailLines, follow);
         } else {
-            new TailFile(verbose).tail(file, tailLines);
+            new TailFile(config).tail(file, tailLines, follow);
         }
 
     }
