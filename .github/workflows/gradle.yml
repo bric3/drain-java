@@ -8,9 +8,14 @@ on:
 
 jobs:
   gradle:
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
+        experimental: [false]
+        include:
+          - os: windows-latest
+            experimental: true
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
