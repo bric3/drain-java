@@ -78,16 +78,14 @@ public class DrainFile {
     }
 
     private String preProcess(String line) {
-
-
-        var rstripUpTo = config.drain.rstripUpTo;
-        if (rstripUpTo > 0) {
-            return line.substring(rstripUpTo);
+        var parseAfterCol = config.drain.parseAfterCol;
+        if (parseAfterCol > 0) {
+            return line.substring(parseAfterCol);
         }
 
-        var rstripUpToString = config.drain.rstripAfterString;
-        if (!rstripUpToString.isEmpty()) {
-            return line.substring(line.indexOf(rstripUpToString) + rstripUpToString.length());
+        var parseAfterStr = config.drain.parseAfterStr;
+        if (!parseAfterStr.isEmpty()) {
+            return line.substring(line.indexOf(parseAfterStr) + parseAfterStr.length());
         }
         return line;
     }

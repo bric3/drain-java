@@ -27,12 +27,12 @@ public class Config {
     }
 
     static class DrainConfig {
-        final String rstripAfterString;
-        final int rstripUpTo;
+        final String parseAfterStr;
+        final int parseAfterCol;
 
-        DrainConfig(String rstripAfterString, int rstripUpTo) {
-            this.rstripAfterString = rstripAfterString;
-            this.rstripUpTo = rstripUpTo;
+        DrainConfig(String parseAfterStr, int parseAfterCol) {
+            this.parseAfterStr = parseAfterStr;
+            this.parseAfterCol = parseAfterCol;
         }
     }
 }
