@@ -14,12 +14,13 @@ In avoiding deep trees this also helps to keep it balance.
 
 == Usage
 
-https://foojay.io/almanac/jdk-11/[Java 11] is required to run drain-java.
+First, https://foojay.io/almanac/jdk-11/[Java 11] is required to run drain-java.
 
 === From command line
 
 Since this tool is not yet released the tool needs to be built locally.
-Also the built jar is not yet super user-friendly. Also options could change.
+Also, the built jar is not yet super user-friendly. Since it's not a finished
+product, anything could change.
 
 .example usage
 [source, shell]
@@ -57,6 +58,7 @@ By default, the tool act similarly to `tail`, and it will output the file to the
 The tool can _follow_ a file if the `--follow` option is passed.
 However, when run with the `--drain` this tool will classify log lines using DRAIN, and will
 output identified clusters.
+Note that this tool doesn't handle multiline log messages (like logs that contains a stacktrace).
 
 On the SSH log data set we can use it this way.
 
