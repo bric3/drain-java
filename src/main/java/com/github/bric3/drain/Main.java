@@ -47,6 +47,10 @@ public class Main implements Runnable {
             description = "Verbose output, mostly for DRAIN or errors")
     boolean verbose;
 
+    @Option(names = {"-e"},
+            description = "Experimental code",
+            hidden = true)
+    boolean experimental;
 
     @Override
     public void run() {
@@ -55,7 +59,9 @@ public class Main implements Runnable {
             System.exit(ERR_NO_FILEPATH);
         }
 
-        if (drain) {
+        if (experimental) {
+            MappedFileLineReader.main(null);
+        } else if (drain) {
             new DrainFile(verbose).drain(file);
         } else {
             new TailFile(verbose).tail(file, tailLines);

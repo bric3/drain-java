@@ -1,6 +1,7 @@
 package com.github.bric3.drain;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.channels.Channels;
@@ -11,15 +12,20 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.Objects;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-public class MappedFileLineReader {
+public class MappedFileLineReader implements Closeable {
 
     private static Charset charset = StandardCharsets.UTF_8;
     private static CharsetDecoder decoder = charset.newDecoder();
     private IOReadAction readAction;
     private Config config;
 
+    private AtomicBoolean closed = new AtomicBoolean(false);
+    private int wsPollTimeoutMs = 100;
 
     public MappedFileLineReader(Config config, IOReadAction readAction) {
         this.readAction = readAction;
@@ -27,16 +33,31 @@ public class MappedFileLineReader {
     }
 
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         var path = Path.of("/Users/bric3/Library/Logs/JetBrains/IntelliJIdea2020.3/idea.log");
 
         Consumer<String> lineConsumer = line -> System.out.printf("==> %s%n", line);
 
         Config config = new Config(true);
-        System.out.printf("%s%n", "with line reader");
-        new MappedFileLineReader(config, new LineConsumer(lineConsumer)).watchPath(path, 10);
-        System.out.printf("%s%n", "with channel sink");
-        new MappedFileLineReader(config, new ChannelSink(Channels.newChannel(System.out))).watchPath(path, 10);
+        var scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        System.out.printf("* %s%n", "with line reader");
+        try (var mappedFileLineReader = new MappedFileLineReader(config, new LineConsumer(lineConsumer))) {
+            scheduledExecutorService.schedule(mappedFileLineReader::close, 5, TimeUnit.SECONDS);
+            mappedFileLineReader.watchPath(path, 10);
+        }
+        System.out.printf("* %s%n", "with channel sink");
+        try (var mappedFileChannelSink = new MappedFileLineReader(config, new ChannelSink(Channels.newChannel(System.out)))) {
+            scheduledExecutorService.schedule(mappedFileChannelSink::close, 5, TimeUnit.SECONDS);
+            mappedFileChannelSink.watchPath(path, 10);
+        }
+        System.out.printf("it's over");
+    }
+
+    public void close() {
+        if (config.verbose) {
+            System.out.println("Closing watcher");
+        }
+        closed.set(true);
     }
 
     private void watchPath(Path path, int tailLines) {
@@ -51,16 +72,29 @@ public class MappedFileLineReader {
                 System.out.printf("Reading file from position : %d%n", startPosition);
             }
 
-            var newPosition = readAction.apply(sourceChannel, startPosition);
+            var position = startPosition;
+            position += readAction.apply(sourceChannel, startPosition);
 
             path.getParent().register(ws, StandardWatchEventKinds.ENTRY_MODIFY);
+            while (!closed.get()) { // TODO cancel
+                WatchKey wk;
+                try {
+                    wk = ws.poll(wsPollTimeoutMs, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    if (config.verbose) {
+                        e.printStackTrace(System.err);
+                    }
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+                if (wk == null) {
+                    continue;
+                }
 
-            while (true) { // TODO cancel
-                var wk = ws.take();
                 for (WatchEvent<?> event : wk.pollEvents()) {
-                    var changed = (Path) event.context();
-                    if (Objects.equals(changed, path.getFileName())) {
-                        newPosition = readAction.apply(sourceChannel, startPosition);
+                    if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY
+                        && Objects.equals(event.context(), path.getFileName())) {
+                        position += readAction.apply(sourceChannel, position);
                     }
                 }
                 var valid = wk.reset();
@@ -71,7 +105,7 @@ public class MappedFileLineReader {
 
 
             if (config.verbose) {
-                System.out.printf("Read file up to position : %d%n", newPosition);
+                System.out.printf("Read file up to position : %d%n", position);
             }
 
         } catch (IOException e) {
@@ -79,11 +113,6 @@ public class MappedFileLineReader {
                 e.printStackTrace(System.err);
             }
             System.exit(Main.ERR_IO_TAILING_FILE);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            if (config.verbose) {
-                e.printStackTrace(System.err);
-            }
         }
     }
 
@@ -138,7 +167,7 @@ public class MappedFileLineReader {
 //                stringConsumer.accept(line + "\\r\\n");
 //                line = br.readLine();
 //            }
-            return sourceChannel.position();
+            return sourceChannel.position() - startPosition;
         }
     }
 
