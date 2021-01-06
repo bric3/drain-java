@@ -191,7 +191,7 @@ public class MappedFileLineReader implements Closeable {
             return tail(fileChannel, startPosition, sink);
         }
 
-        long tail(FileChannel pathChannel,
+        private long tail(FileChannel pathChannel,
                   long startPosition,
                   WritableByteChannel sink) throws IOException {
             assert pathChannel != null && sink != null;
@@ -227,6 +227,8 @@ public class MappedFileLineReader implements Closeable {
 
 
     interface IOReadAction {
+        IOReadAction NO_OP = (c, s) -> 0;
+        
         long apply(FileChannel fileChannel, long startPosition) throws IOException;
     }
 }

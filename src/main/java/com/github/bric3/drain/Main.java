@@ -76,7 +76,7 @@ public class Main implements Runnable {
         if (drain) {
             new DrainFile(config).drain(file, tailLines, follow);
         } else {
-            new TailFile(verbose).tail(file, tailLines);
+            new TailFile(config).tail(file, tailLines, follow);
         }
 
     }

@@ -17,6 +17,9 @@ public class DrainFile {
     }
 
     public void drain(Path file, int tailLines, boolean follow) {
+        assert file != null;
+        assert tailLines >= 0;
+
         var drain = Drain.drainBuilder()
                          .additionalDelimiters("_")
                          .depth(4)

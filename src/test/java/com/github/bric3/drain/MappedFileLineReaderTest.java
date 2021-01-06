@@ -1,6 +1,7 @@
 package com.github.bric3.drain;
 
 import com.github.bric3.drain.MappedFileLineReader.ChannelSink;
+import com.github.bric3.drain.MappedFileLineReader.IOReadAction;
 import com.github.bric3.drain.MappedFileLineReader.LineConsumer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -9,10 +10,14 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Random;
 import java.util.concurrent.Executors;
@@ -21,8 +26,11 @@ import java.util.concurrent.TimeUnit;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 class MappedFileLineReaderTest {
+    private final Path resourceDirectory = Paths.get("src", "test", "resources");
+
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @Test
@@ -68,6 +76,37 @@ class MappedFileLineReaderTest {
         scheduler.shutdown();
     }
 
+    @Test
+    void find_start_position_given_last_lines() throws IOException {
+        try (var channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
+                                            StandardOpenOption.READ)) {
+            var r = new MappedFileLineReader(new Config(true), IOReadAction.NO_OP);
+            assertThat(r.findTailStartPosition(channel, 10)).isEqualTo(0);
+            assertThat(r.findTailStartPosition(channel, 2)).isEqualTo(41);
+        }
+    }
+
+    @Test
+    void can_read_from_position() throws IOException {
+        try (var channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
+                                            StandardOpenOption.READ)) {
+            var sink = new ChannelSink(TestSink.nullSink());
+            assertThat(sink.apply(channel, 0)).isEqualTo(183);
+            assertThat(sink.apply(channel, 41)).isEqualTo(142);
+        }
+    }
+
+    @Test
+    void cannot_read_from_negative_position() throws IOException {
+        try (var channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
+                                            StandardOpenOption.READ)) {
+            var sink = new ChannelSink(TestSink.nullSink());
+            assertThatExceptionOfType(AssertionError.class).isThrownBy(
+                    () -> sink.apply(channel, -1)
+            );
+        }
+    }
+
     static class LineAppender implements Runnable {
         Path path;
         int lineCounter = 0;
@@ -96,4 +135,30 @@ class MappedFileLineReaderTest {
             }
         }
     }
+    private static class TestSink implements WritableByteChannel {
+
+        int writenBytes = 0;
+
+        static TestSink nullSink() {
+            return new TestSink();
+        }
+
+        @Override
+        public boolean isOpen() {
+            return true;
+        }
+
+        @Override
+        public void close() throws IOException {
+
+        }
+
+        @Override
+        public int write(ByteBuffer src) throws IOException {
+            var remaining = src.remaining();
+            writenBytes += remaining;
+            return remaining;
+        }
+    }
+
 }
