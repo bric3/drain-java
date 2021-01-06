@@ -12,7 +12,6 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.Objects;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -26,43 +25,18 @@ public class MappedFileLineReader implements Closeable {
 
     private AtomicBoolean closed = new AtomicBoolean(false);
     private int wsPollTimeoutMs = 100;
+    private long totalReadBytes;
 
     public MappedFileLineReader(Config config, IOReadAction readAction) {
         this.readAction = readAction;
         this.config = config;
     }
-
-
-    public static void main(String[] args) {
-        var path = Path.of("/Users/bric3/Library/Logs/JetBrains/IntelliJIdea2020.3/idea.log");
-
-        Consumer<String> lineConsumer = line -> System.out.printf("==> %s%n", line);
-
-        Config config = new Config(true);
-        var scheduledExecutorService = Executors.newScheduledThreadPool(1);
-        System.out.printf("* %s%n", "with line reader");
-        try (var mappedFileLineReader = new MappedFileLineReader(config, new LineConsumer(lineConsumer))) {
-            scheduledExecutorService.schedule(mappedFileLineReader::close, 1, TimeUnit.MINUTES);
-            mappedFileLineReader.watchPath(path, 10);
-        }
-        System.out.printf("* %s%n", "with channel sink");
-        try (var mappedFileChannelSink = new MappedFileLineReader(config, new ChannelSink(Channels.newChannel(System.out)))) {
-            scheduledExecutorService.schedule(mappedFileChannelSink::close, 1, TimeUnit.MINUTES);
-            mappedFileChannelSink.watchPath(path, 10);
-        }
-        System.out.printf("it's over");
-        System.exit(0);
-    }
-
-    public void close() {
-        closed.set(true);
-    }
-
-    private void watchPath(Path path, int tailLines) {
+    
+    public void watchPath(Path path, int tailLines) {
         assert path != null;
         assert tailLines >= 0;
 
-        
+
         try (var ws = FileSystems.getDefault().newWatchService();
              var sourceChannel = FileChannel.open(path, StandardOpenOption.READ)) {
             var startPosition = tailLines > 0 ? findTailStartPosition(sourceChannel, tailLines) : 0;
@@ -71,7 +45,9 @@ public class MappedFileLineReader implements Closeable {
             }
 
             var position = startPosition;
-            position += readAction.apply(sourceChannel, startPosition);
+            var readBytes = readAction.apply(sourceChannel, startPosition);
+            totalReadBytes += readBytes;
+            position += readBytes;
             if (config.verbose) {
                 System.out.printf("File read: %d -> %d (%d bytes)%n",
                                   startPosition,
@@ -99,7 +75,9 @@ public class MappedFileLineReader implements Closeable {
                     if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY
                         && Objects.equals(event.context(), path.getFileName())) {
                         var previousPosition = position;
-                        position += readAction.apply(sourceChannel, position);
+                        readBytes = readAction.apply(sourceChannel, position);
+                        totalReadBytes += readBytes;
+                        position += readBytes;
                         if (config.verbose) {
                             System.out.printf("File read: %d -> %d (%d bytes)%n",
                                               previousPosition,
@@ -115,11 +93,12 @@ public class MappedFileLineReader implements Closeable {
             }
 
 
+            totalReadBytes = position - startPosition;
             if (config.verbose) {
                 System.out.printf("Total file read: %d -> %d (%d bytes)%n",
                                   startPosition,
                                   position,
-                                  position - startPosition);
+                                  totalReadBytes);
             }
 
         } catch (IOException e) {
@@ -128,6 +107,14 @@ public class MappedFileLineReader implements Closeable {
             }
             System.exit(Main.ERR_IO_TAILING_FILE);
         }
+    }
+
+    public long totalReadBytes() {
+        return totalReadBytes;
+    }
+
+    public void close() {
+        closed.set(true);
     }
 
     static class LineConsumer implements IOReadAction {
