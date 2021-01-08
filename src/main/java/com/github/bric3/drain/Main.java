@@ -77,6 +77,15 @@ public class Main implements Runnable {
             System.exit(ERR_NO_FILEPATH);
         }
 
+        if (experimental) {
+            try {
+                GradleFileWatcher.watch(file);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+            return;
+        }
+
         var config = new Config(verbose, parseAfterStr, parseAfterCol);
 
         if (drain) {

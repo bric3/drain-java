@@ -8,9 +8,14 @@ plugins {
 
 repositories {
     jcenter()
+    maven {
+        setUrl("https://dl.bintray.com/adammurdoch/maven")
+    }
 }
 
 dependencies {
+    implementation("net.rubygrapefruit:file-events:0.22-milestone-7")
+    implementation("net.rubygrapefruit:native-platform:0.22-milestone-7")
     implementation("com.google.guava:guava:30.1-jre")
     implementation("info.picocli:picocli:4.6.1")
     annotationProcessor("info.picocli:picocli-codegen:4.6.1")
