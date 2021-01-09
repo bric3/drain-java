@@ -199,7 +199,7 @@ public class MappedFileLineReader implements Closeable {
 
                 if (c == '\n') { // on newline
                     if (lineCounter == fromLine.number) {
-                        return i; // TODO may want to return i + 1 (to start at the line beginning)
+                        return i + 1;
                     }
                     lineCounter++;
                 }
@@ -211,17 +211,17 @@ public class MappedFileLineReader implements Closeable {
             }
 
             long lineCounter = 0;
-            for (long i = 0, channelSize = channel.size(); i <= channelSize; i++) {
+            for (long i = 0, channelSize = channel.size(); i < channelSize; i++) {
                 char c = (char) buffer.get((int) i);
 
                 if (c == '\n') { // on newline
                     if (lineCounter == fromLine.number) {
-                        return i; // TODO may want to return i - 1 (to start at the line before this line ending)
+                        return i - 1;
                     }
                     lineCounter++;
                 }
             }
-            return 0;
+            return channel.size();
         }
     }
 

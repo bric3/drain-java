@@ -81,8 +81,13 @@ class MappedFileLineReaderTest {
         try (var channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
                                             StandardOpenOption.READ)) {
             var r = new MappedFileLineReader(new Config(true), IOReadAction.NO_OP);
+
             assertThat(r.findTailStartPosition(channel, FromLine.fromEnd(10))).isEqualTo(0);
-            assertThat(r.findTailStartPosition(channel, FromLine.fromEnd(2))).isEqualTo(41);
+            assertThat(r.findTailStartPosition(channel, FromLine.fromEnd(2))).isEqualTo(42);
+            assertThat(r.findTailStartPosition(channel, FromLine.fromEnd(0))).isEqualTo(183);
+            assertThat(r.findTailStartPosition(channel, FromLine.fromStart(0))).isEqualTo(0);
+            assertThat(r.findTailStartPosition(channel, FromLine.fromStart(2))).isEqualTo(181);
+            assertThat(r.findTailStartPosition(channel, FromLine.fromStart(10))).isEqualTo(183);
         }
     }
 
