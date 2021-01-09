@@ -45,7 +45,7 @@ class MappedFileLineReaderTest {
             scheduler.schedule(() -> future.cancel(false), 4, TimeUnit.SECONDS);
             scheduler.schedule(r::close, 10, TimeUnit.SECONDS);
 
-            r.tailRead(path, 0, true);
+            r.tailRead(path, FromLine.fromStart(0), true);
 
             assertThat(r.totalReadBytes()).isEqualTo(lineAppender.writtenBytes);
         }
@@ -64,7 +64,7 @@ class MappedFileLineReaderTest {
             scheduler.schedule(() -> future.cancel(false), 4, TimeUnit.SECONDS);
             scheduler.schedule(r::close, 10, TimeUnit.SECONDS);
 
-            r.tailRead(path, 0, true);
+            r.tailRead(path, FromLine.fromStart(0), true);
 
             assertThat(r.totalReadBytes()).isEqualTo(lineAppender.writtenBytes);
             assertThat(path.toFile()).hasBinaryContent(out.toByteArray());
@@ -81,8 +81,8 @@ class MappedFileLineReaderTest {
         try (var channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
                                             StandardOpenOption.READ)) {
             var r = new MappedFileLineReader(new Config(true), IOReadAction.NO_OP);
-            assertThat(r.findTailStartPosition(channel, 10)).isEqualTo(0);
-            assertThat(r.findTailStartPosition(channel, 2)).isEqualTo(41);
+            assertThat(r.findTailStartPosition(channel, FromLine.fromEnd(10))).isEqualTo(0);
+            assertThat(r.findTailStartPosition(channel, FromLine.fromEnd(2))).isEqualTo(41);
         }
     }
 

@@ -18,9 +18,9 @@ public class Config {
         this(verbose, "", 0);
     }
 
-    public Config(boolean verbose, String rstripAfter, int rstripUpTo) {
+    public Config(boolean verbose, String parseAfterStr, int parseAfterCol) {
         this.verbose = verbose;
-        this.drain = new DrainConfig(rstripAfter, rstripUpTo);
+        this.drain = new DrainConfig(parseAfterStr, parseAfterCol);
         this.out = System.out;
         this.err = System.err;
         this.charset = StandardCharsets.UTF_8;

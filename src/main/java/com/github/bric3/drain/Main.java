@@ -1,5 +1,6 @@
 package com.github.bric3.drain;
 
+import com.github.bric3.drain.FromLine.StartFromLineConverter;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -55,8 +56,10 @@ public class Main implements Runnable {
     @Option(names = {"-n", "--lines"},
             description = "output the last NUM lines, instead of the last 10;" +
                           " or use -n 0 to output starting from beginning",
-            paramLabel = "NUM")
-    int tailLines = 10;
+            converter = StartFromLineConverter.class,
+            paramLabel = "[+]NUM",
+            defaultValue = "10")
+    FromLine fromLine;
 
     @Option(names = {"--verbose"},
             description = "Verbose output, mostly for DRAIN or errors")
@@ -77,9 +80,9 @@ public class Main implements Runnable {
         var config = new Config(verbose, parseAfterStr, parseAfterCol);
 
         if (drain) {
-            new DrainFile(config).drain(file, tailLines, follow);
+            new DrainFile(config).drain(file, fromLine, follow);
         } else {
-            new TailFile(config).tail(file, tailLines, follow);
+            new TailFile(config).tail(file, fromLine, follow);
         }
 
     }

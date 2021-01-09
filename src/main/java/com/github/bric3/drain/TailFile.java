@@ -18,18 +18,18 @@ public class TailFile {
         this.config = config;
     }
 
-    public void tail(Path path, int tailLines, boolean follow) {
+    public void tail(Path path, FromLine fromLine, boolean follow) {
         assert path != null;
-        assert tailLines >= 0;
+        assert fromLine != null;
 
         new MappedFileLineReader(config, new ChannelSink(STDOUT))
-                .tailRead(path, tailLines, follow);
+                .tailRead(path, fromLine, follow);
 
 
 //        try (var ws = FileSystems.getDefault().newWatchService();
 //             var pathChannel = FileChannel.open(path, StandardOpenOption.READ)) {
 //
-//            var startPosition = tailLines > 0 ? findTailStartPosition(pathChannel, tailLines) : 0;
+//            var startPosition = startFromLine > 0 ? findTailStartPosition(pathChannel, startFromLine) : 0;
 //            if(verbose) {
 //                System.out.printf("Reading file from position : %d%n", startPosition);
 //            }

@@ -34,15 +34,15 @@ public class MappedFileLineReader implements Closeable {
         this.wsPollTimeoutMs = 100;
         this.closed = new AtomicBoolean(false);
     }
-    
-    public void tailRead(Path path, int tailLines, boolean follow) {
+
+    public void tailRead(Path path, FromLine tailFromLine, boolean follow) {
         assert path != null;
-        assert tailLines >= 0;
+        assert tailFromLine != null;
 
 
         try (var ws = FileSystems.getDefault().newWatchService();
              var sourceChannel = FileChannel.open(path, StandardOpenOption.READ)) {
-            var startPosition = tailLines > 0 ? findTailStartPosition(sourceChannel, tailLines) : 0;
+            var startPosition = findTailStartPosition(sourceChannel, tailFromLine);
             if (config.verbose) {
                 config.out.printf("Reading file from position : %d%n", startPosition);
             }
@@ -192,8 +192,8 @@ public class MappedFileLineReader implements Closeable {
         }
 
         private long tail(FileChannel pathChannel,
-                  long startPosition,
-                  WritableByteChannel sink) throws IOException {
+                          long startPosition,
+                          WritableByteChannel sink) throws IOException {
             assert pathChannel != null && sink != null;
             assert startPosition >= 0;
             var fileSize = pathChannel.size();
@@ -202,33 +202,55 @@ public class MappedFileLineReader implements Closeable {
         }
     }
 
-    long findTailStartPosition(FileChannel channel, int tailLines) throws IOException {
+    long findTailStartPosition(FileChannel channel, FromLine fromLine) throws IOException {
         // straw man find start position
         // this implementation hasn't been tested with two char line endings  (CR (0x0D) and LF (0x0A))
         var buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
 
-        // go to end
-        buffer.position((int) channel.size());
-
-        int lineCounter = 0;
-        long i;
-        for (i = channel.size() - 1; i >= 0; i--) {
-            char c = (char) buffer.get((int) i);
-
-            if (c == '\n') { // on newline, reverse buffer
-                if (lineCounter == tailLines) {
-                    break;
-                }
-                lineCounter++;
+        if (!fromLine.fromStart) {
+            if (fromLine.number == 0) {
+                return channel.size();
             }
+
+            // go to end
+            buffer.position((int) channel.size());
+
+            long lineCounter = 0;
+            for (long i = channel.size() - 1; i >= 0; i--) {
+                char c = (char) buffer.get((int) i);
+
+                if (c == '\n') { // on newline
+                    if (lineCounter == fromLine.number) {
+                        return i; // TODO may want to return i + 1 (to start at the line beginning)
+                    }
+                    lineCounter++;
+                }
+            }
+            return 0;
+        } else {
+            if (fromLine.number == 0) {
+                return 0;
+            }
+
+            long lineCounter = 0;
+            for (long i = 0, channelSize = channel.size(); i <= channelSize; i++) {
+                char c = (char) buffer.get((int) i);
+
+                if (c == '\n') { // on newline
+                    if (lineCounter == fromLine.number) {
+                        return i; // TODO may want to return i - 1 (to start at the line before this line ending)
+                    }
+                    lineCounter++;
+                }
+            }
+            return 0;
         }
-        return Math.max(i, 0);
     }
 
 
     interface IOReadAction {
         IOReadAction NO_OP = (c, s) -> 0;
-        
+
         long apply(FileChannel fileChannel, long startPosition) throws IOException;
     }
 }

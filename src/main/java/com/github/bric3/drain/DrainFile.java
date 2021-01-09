@@ -16,9 +16,9 @@ public class DrainFile {
         this.config = config;
     }
 
-    public void drain(Path file, int tailLines, boolean follow) {
+    public void drain(Path file, FromLine fromLine, boolean follow) {
         assert file != null;
-        assert tailLines >= 0;
+        assert fromLine != null;
 
         var drain = Drain.drainBuilder()
                          .additionalDelimiters("_")
@@ -38,7 +38,7 @@ public class DrainFile {
         };
 
         new MappedFileLineReader(config, new LineConsumer(drainConsumer, config.charset))
-                .tailRead(file, tailLines, follow);
+                .tailRead(file, fromLine, follow);
 
 
 //        try {
