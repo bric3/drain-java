@@ -40,30 +40,6 @@ public class DrainFile {
         new MappedFileLineReader(config, new LineConsumer(drainConsumer, config.charset))
                 .tailRead(file, fromLine, follow);
 
-
-//        try {
-//            Files.lines(file, StandardCharsets.UTF_8)
-//                 .peek(__ -> lineCounter.incrementAndGet())
-//                 .map(l -> {
-//                     if (!stripUpTo.isEmpty()) {
-//                         return l.substring(l.indexOf(stripUpTo) + stripUpTo.length());
-//                     } else {
-//                         return l;
-//                     }
-//                 })
-//                 .forEach(content -> {
-//                     drain.parseLogMessage(content);
-//                     if (verbose && lineCounter.get() % 10000 == 0) {
-//                         System.out.printf("%4d clusters so far%n", drain.clusters().size());
-//                     }
-//                 });
-//        } catch (IOException e) {
-//            if(verbose) {
-//                e.printStackTrace(System.err);
-//            }
-//            System.exit(Main.ERR_IO_TAILING_FILE);
-//        }
-
         if (config.verbose) {
             config.out.printf("---- Done processing file. Total of %d lines, done in %s, %d clusters%n",
                               lineCounter.get(),

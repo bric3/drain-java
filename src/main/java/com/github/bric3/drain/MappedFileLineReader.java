@@ -60,7 +60,7 @@ public class MappedFileLineReader implements Closeable {
 
             if (follow) {
                 path.getParent().register(ws, StandardWatchEventKinds.ENTRY_MODIFY);
-                while (!closed.get()) { // TODO cancel
+                while (!closed.get()) {
                     WatchKey wk;
                     try {
                         wk = ws.poll(wsPollTimeoutMs, TimeUnit.MILLISECONDS);
@@ -138,25 +138,10 @@ public class MappedFileLineReader implements Closeable {
         }
 
         private long readByLines(FileChannel sourceChannel, long startPosition, Consumer<String> stringConsumer) throws IOException {
-//            // option 1
-//            ByteBuffer buffer = ByteBuffer.allocate(1024);
-//            while (sourceChannel.read(buffer) != -1) {
-//                buffer.flip();
-//                System.out.print(decoder.decode(buffer)); // may fail on decoding
-//                buffer.clear();
-//            }
-
-//            // option 2
-//            MappedByteBuffer bb = sourceChannel.map(FileChannel.MapMode.READ_ONLY, 0, (int) sourceChannel.size()); // possible oom on big files
-//            CharBuffer cb = decoder.decode(bb);
-
-            // option 3
             var reader = Channels.newReader(sourceChannel, charset);  // investigate decoder customization
             var br = new BufferedReader(reader); // handles new lines and EOF
 
-            // option 3.a
-//        br.skip(startPosition); // read the whole file (in private method fill())
-            sourceChannel.position(startPosition); // avoid reading the file if unecessary
+            sourceChannel.position(startPosition); // avoid reading the file if unnecessary
             br.lines()
               .onClose(() -> {
                   try {
@@ -167,13 +152,6 @@ public class MappedFileLineReader implements Closeable {
               })
               .forEach(stringConsumer);
 
-//            // option 3.b
-//            br.skip(startPosition);
-//            String line = br.readLine();
-//            while (!line.isBlank()) {
-//                stringConsumer.accept(line + "\\r\\n");
-//                line = br.readLine();
-//            }
             return sourceChannel.position() - startPosition;
         }
     }
