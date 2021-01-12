@@ -4,22 +4,37 @@ import net.rubygrapefruit.platform.file.FileEvents;
 import net.rubygrapefruit.platform.file.FileWatchEvent;
 import net.rubygrapefruit.platform.file.FileWatcher;
 import net.rubygrapefruit.platform.internal.Platform;
-import net.rubygrapefruit.platform.internal.jni.LinuxFileEventFunctions;
-import net.rubygrapefruit.platform.internal.jni.OsxFileEventFunctions;
-import net.rubygrapefruit.platform.internal.jni.WindowsFileEventFunctions;
+import net.rubygrapefruit.platform.internal.jni.*;
+import net.rubygrapefruit.platform.test.Main;
 
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class GradleFileWatcher {
 
+    public static void main(String[] args) throws Exception {
+//        watch(Path.of("/Users/bric3/Library/Logs/JetBrains/IntelliJIdea2020.3/idea.log"));
 
 
-    public static void watch(Path path) throws InterruptedException {
+//        LogManager.getLogManager().getLogger(NativeLogger.class.getCanonicalName()).setLevel(Level.ALL);
+
+        Main.main(new String[] {"--machine"});
+        Main.main(args);
+    }
+
+    public static void watch(Path... paths) throws InterruptedException {
+        var fileNames = Arrays.stream(paths)
+                              .map(Path::getFileName)
+                              .map(Path::toString)
+                              .collect(Collectors.toSet());
+
         final BlockingQueue<FileWatchEvent> eventQueue = new ArrayBlockingQueue<>(16);
         Thread processorThread = new Thread(() -> {
             final AtomicBoolean terminated = new AtomicBoolean(false);
@@ -34,6 +49,8 @@ public class GradleFileWatcher {
                     @Override
                     public void handleChangeEvent(FileWatchEvent.ChangeType type, String absolutePath) {
                         System.out.printf("Change detected: %s / '%s'%n", type, absolutePath);
+                        if (fileNames.stream().anyMatch(absolutePath::endsWith)) {
+                        }
                     }
 
                     @Override
@@ -60,12 +77,12 @@ public class GradleFileWatcher {
             }
         }, "File watcher event handler");
         processorThread.start();
-        FileWatcher watcher = createWatcher(path, eventQueue);
+        FileWatcher watcher = createWatcher(eventQueue, paths);
         try {
-            System.out.println("Waiting - type ctrl-d to exit ...");
+            System.out.println("Waiting - type 'q' to exit ...");
             while (true) {
                 int ch = System.in.read();
-                if (ch < 0) {
+                if (ch == 'q') {
                     break;
                 }
             }
@@ -80,24 +97,40 @@ public class GradleFileWatcher {
     }
 
 
-    private static FileWatcher createWatcher(Path path, BlockingQueue<FileWatchEvent> eventQueue) throws InterruptedException {
+    private static FileWatcher createWatcher(BlockingQueue<FileWatchEvent> eventQueue, Path... paths) throws InterruptedException {
         FileWatcher watcher;
+        Logger.getLogger(NativeLogger.class.getName()).setLevel(Level.ALL);
+
         if (Platform.current().isMacOs()) {
+            FileEvents.get(OsxFileEventFunctions.class).invalidateLogLevelCache();
             watcher = FileEvents.get(OsxFileEventFunctions.class)
                                 .newWatcher(eventQueue)
+//                                .withLatency(100, TimeUnit.MILLISECONDS)
                                 .start();
         } else if (Platform.current().isLinux()) {
             watcher = FileEvents.get(LinuxFileEventFunctions.class)
                                 .newWatcher(eventQueue)
                                 .start();
-        } else if (Platform.current().isWindows()) {
+        } else {
+            if (!Platform.current().isWindows()) {
+                throw new RuntimeException("Only Windows and macOS are supported for file watching");
+            }
+
             watcher = FileEvents.get(WindowsFileEventFunctions.class)
                                 .newWatcher(eventQueue)
                                 .start();
-        } else {
-            throw new RuntimeException("Only Windows and macOS are supported for file watching");
         }
-        watcher.startWatching(List.of(path.toFile()));
+
+        // it seems on osx we cannot watch files directly
+
+        var parentFolder = Arrays.stream(paths)
+                            .map(Path::getParent)
+                            .map(Path::toFile)
+                            .collect(Collectors.toUnmodifiableList());
+        System.out.printf("parent folders to watch : %s%n", parentFolder);
+
+
+        watcher.startWatching(parentFolder);
         return watcher;
     }
 
