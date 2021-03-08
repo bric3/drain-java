@@ -1,5 +1,8 @@
 package com.github.bric3.drain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +27,19 @@ public class LogCluster {
 
     LogCluster(@Nonnull List<String> logTemplateTokens) {
         this.clusterId = ++instanceCounter;
+        this.logTemplateTokens = logTemplateTokens;
+    }
+
+    /**
+     * Json creator and Json properties added to allow Drain-object import.
+     */
+    @JsonCreator
+    public LogCluster( @JsonProperty("clusterId") int clusterId,
+                       @JsonProperty("sightings") int sightings,
+                       @JsonProperty("logTemplateTokens") List<String> logTemplateTokens) {
+        this.instanceCounter++;
+        this.clusterId = clusterId;
+        this.sightings = sightings;
         this.logTemplateTokens = logTemplateTokens;
     }
 

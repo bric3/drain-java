@@ -3,10 +3,24 @@ package com.github.bric3.drain;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+
+
 
 /**
  * Port of the Drain algorithm for log parsing
@@ -67,9 +81,9 @@ public class Drain {
     /**
      * All log clusters.
      */
-    private final List<LogCluster> clusters = new ArrayList<>();
+    private final List<LogCluster> clusters;
 
-    private final Node root = new Node("(ROOT)", 0);
+    private final Node root;
 
     private Drain(int depth,
                   double similarityThreshold,
@@ -79,6 +93,94 @@ public class Drain {
         this.similarityThreshold = similarityThreshold;
         this.maxChildPerNode = maxChildPerNode;
         this.delimiters = " " + additionalDelimiters;
+        this.clusters = new ArrayList<>();
+        this.root = new Node("(ROOT)", 0);
+    }
+
+    /**
+     * Json creator and Json properties allowing Drain-object import.
+     */
+    @JsonCreator
+    private Drain(@JsonProperty("depth") int depth,
+                  @JsonProperty("similarityThreshold") double similarityThreshold,
+                  @JsonProperty("maxChildPerNode") int maxChildPerNode,
+                  @JsonProperty("delimiters") String additionalDelimiters,
+                  @JsonProperty("clusters") List<LogCluster> clusters,
+                  @JsonProperty("root") Node root) {
+        this.depth = depth;
+        this.similarityThreshold = similarityThreshold;
+        this.maxChildPerNode = maxChildPerNode;
+        this.delimiters = " " + additionalDelimiters;
+        this.clusters = new ArrayList<LogCluster>();
+        this.root = root;
+        logClustersLinker(this.root, this.clusters);
+    }
+
+    /**
+     * Links the list of clusters from tree nodes to Drain.clusters
+     * (needed when importing a model)
+     */
+    private void logClustersLinker(Node aux, List<LogCluster> clusters) {
+        if (aux != null) {
+            for (Node n: aux.allChildren().values()) {
+                if (!n.clusters().isEmpty()) {
+                    clusters.addAll(n.clusters());
+                }
+                logClustersLinker(n, clusters);
+            }
+        }
+    }
+
+    /**
+     * Drain-object exporting functionality which saves a drain model
+     * in a json file at given path.
+     */
+    public void drainExport(String filePath) {
+        // Instance an Object Mapper and allow the access to the Drain object attributes
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+        
+        // Write the Drain object attributes into path file
+        try {
+            System.out.printf("---- Saving drain model in file %s %n",
+                              filePath);
+            objectMapper.writeValue(new FileOutputStream(filePath), this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Drain-object importing functionality which creates a Drain instance from the input
+     * json filepath containing Drain object attributes.
+     */
+    public static Drain drainImport(String filePath) throws IOException {
+        // Create an Object mapper
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // Setup the input .json file
+        File inputDrain = new File(filePath);
+
+        System.out.printf("---- Recovering drain model from file %s %n",
+                          filePath);
+        // Map the attributes from the file and return the Drain instance
+        return objectMapper.readValue(inputDrain, Drain.class);
+    }
+
+    /**
+     * Returns the matching log cluster given a log message (null if no matchings)
+     *
+     */
+    public LogCluster findLogMessage(@Nonnull String message) {
+        // sprint message by delimiter / whitespaces
+        var contentTokens = tokenize(message);
+
+        // Search the prefix tree
+        var matchCluster = treeSearch(contentTokens);
+
+        //System.out.println("Found node: "+matchCluster);
+
+        return matchCluster;
     }
 
     /**
@@ -88,7 +190,7 @@ public class Drain {
      *
      * @param message The log message content
      */
-    public void parseLogMessage(@Nonnull String message) {
+    public LogCluster parseLogMessage(@Nonnull String message) {
         // sprint message by delimiter / whitespaces
         var contentTokens = tokenize(message);
 
@@ -104,6 +206,9 @@ public class Drain {
             // add the log to an existing cluster
             matchCluster.newSighting(contentTokens);
         }
+        //System.out.println("Found node: "+matchCluster);
+
+        return matchCluster;
     }
 
     private List<String> tokenize(String content) {
@@ -181,7 +286,6 @@ public class Drain {
         if (maxSimilarity >= this.similarityThreshold) {
             matchedCluster = maxCluster;
         }
-
         return matchedCluster;
     }
 
@@ -382,6 +486,7 @@ public class Drain {
             this.maxChildPerNode = maxChildPerNode;
             return this;
         }
+
 
         /**
          * Build a non thread safe instance of Drain.
