@@ -45,7 +45,7 @@ class DrainBulkTest {
              .sorted(Comparator.comparing(LogCluster::sightings).reversed())
              .forEach(System.out::println);
 
-//        assertThat(drain.clusters()).hasSize(51);
+        assertThat(drain.clusters()).hasSize(51);
     }
 
 /*

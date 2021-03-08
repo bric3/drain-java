@@ -3,10 +3,24 @@ package com.github.bric3.drain;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Splitter;
 
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+
+
 
 /**
  * Port of the Drain algorithm for log parsing
@@ -67,9 +81,9 @@ public class Drain {
     /**
      * All log clusters.
      */
-    private final List<LogCluster> clusters = new ArrayList<>();
+    private final List<LogCluster> clusters;
 
-    private final Node root = new Node("(ROOT)", 0);
+    private final Node root;
 
     private Drain(int depth,
                   double similarityThreshold,
@@ -79,6 +93,68 @@ public class Drain {
         this.similarityThreshold = similarityThreshold;
         this.maxChildPerNode = maxChildPerNode;
         this.delimiters = " " + additionalDelimiters;
+        this.clusters = new ArrayList<>();
+        this.root = new Node("(ROOT)", 0);
+    }
+
+    /**
+     * EDIT: Todor Krasimirov from DEVO
+     *
+     * Json creator and Json properties added allowing Drain-object import.
+     */
+    @JsonCreator
+    private Drain(@JsonProperty("depth") int depth,
+                  @JsonProperty("similarityThreshold") double similarityThreshold,
+                  @JsonProperty("maxChildPerNode") int maxChildPerNode,
+                  @JsonProperty("delimiters") String additionalDelimiters,
+                  @JsonProperty("clusters") List<LogCluster> clusters,
+                  @JsonProperty("root") Node root) {
+        this.depth = depth - ROOT_AND_LEAF_LEVELS;
+        this.similarityThreshold = similarityThreshold;
+        this.maxChildPerNode = maxChildPerNode;
+        this.delimiters = " " + additionalDelimiters;
+        this.clusters = clusters;
+        this.root = root;
+    }
+
+    /**
+     * EDIT: Todor Krasimirov from DEVO
+     * 
+     * Add Drain-object exporting functionality which saves a drain model
+     * in a json file at given path.
+     */
+    public void drainExport(String filePath) {
+        // Instance an Object Mapper and allow the access to the Drain object attributes
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+        
+        // Write the Drain object attributes into path file
+        try {
+            System.out.printf("---- Saving drain model in file %s %n",
+                              filePath);
+            objectMapper.writeValue(new FileOutputStream(filePath), this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * EDIT: Todor Krasimirov from DEVO
+     * 
+     * Add a Drain-object importing functionality which creates a Drain instance from the input
+     * json filepath containing Drain object attributes.
+     */
+    public static Drain drainImport(String filePath) throws IOException, JsonMappingException, JsonParseException {
+        // Create an Object mapper
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        // Setup the input .json file
+        File inputDrain = new File(filePath);
+
+        System.out.printf("---- Recovering drain model from file %s %n",
+                          filePath);
+        // Map the attributes from the file and return the Drain instance 
+        return objectMapper.readValue(inputDrain, Drain.class);
     }
 
     /**
@@ -382,6 +458,7 @@ public class Drain {
             this.maxChildPerNode = maxChildPerNode;
             return this;
         }
+
 
         /**
          * Build a non thread safe instance of Drain.

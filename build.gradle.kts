@@ -13,8 +13,12 @@ repositories {
 dependencies {
     implementation("com.google.guava:guava:30.1-jre")
     implementation("info.picocli:picocli:4.6.1")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.4.1")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.4.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.4.1")
     annotationProcessor("info.picocli:picocli-codegen:4.6.1")
 
+    
     testImplementation("org.assertj:assertj-core:3.18.1")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")

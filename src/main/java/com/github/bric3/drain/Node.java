@@ -1,5 +1,8 @@
 package com.github.bric3.drain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,12 +10,30 @@ import java.util.List;
 class Node {
     private final int depth;
     private final Object key;
-    private final HashMap<Object, Node> keyToChildNode = new HashMap<>();
-    private final List<LogCluster> clusters = new ArrayList<>();
+    private final HashMap<Object, Node> keyToChildNode;
+    private final List<LogCluster> clusters;
 
     public Node(Object key, int depth) {
         this.key = key;
         this.depth = depth;
+        this.keyToChildNode = new HashMap<>();
+        this.clusters= new ArrayList<>();
+    }
+
+    /**
+     * EDIT: Todor Krasimirov from DEVO
+     *
+     * Json creator and Json properties added allowing Drain-object import.
+     */
+    @JsonCreator
+    public Node(@JsonProperty("depth") int depth,
+                @JsonProperty("key") Object key,
+                @JsonProperty("keyToChildNode") HashMap<Object, Node> keyToChildNode,
+                @JsonProperty("clusters") List<LogCluster> clusters) {
+        this.depth = depth;
+        this.key = key;
+        this.keyToChildNode = keyToChildNode;
+        this.clusters = clusters;
     }
 
     public Node get(Object key) {
