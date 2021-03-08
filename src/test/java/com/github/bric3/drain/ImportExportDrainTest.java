@@ -73,7 +73,7 @@ class ImportExportDrainTest {
         var lineCounter = new AtomicInteger();
 
         var stopwatch = Stopwatch.createStarted();
-        Files.lines(Paths.get("build/resources/test/SendRec.txt"),
+        Files.lines(Paths.get("src/test/resources/SendRec.txt"),
                     StandardCharsets.UTF_8)
              .peek(__ -> lineCounter.incrementAndGet())
              .forEach(content -> {
