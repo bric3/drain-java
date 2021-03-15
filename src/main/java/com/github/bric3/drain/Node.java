@@ -21,10 +21,9 @@ class Node {
     }
 
     /**
-     * EDIT: Todor Krasimirov from DEVO
-     *
      * Json creator and Json properties added allowing Drain-object import.
      */
+
     @JsonCreator
     public Node(@JsonProperty("depth") int depth,
                 @JsonProperty("key") Object key,
@@ -32,7 +31,17 @@ class Node {
                 @JsonProperty("clusters") List<LogCluster> clusters) {
         this.depth = depth;
         this.key = key;
-        this.keyToChildNode = keyToChildNode;
+        // create integer key when parsing root child node (log length)
+        if(depth == 0) {
+            this.keyToChildNode = new HashMap<>();
+            for (Object k: keyToChildNode.keySet()) {
+                this.keyToChildNode.put(Integer.parseInt(k.toString()), keyToChildNode.get(k));
+            }
+        }
+        // otherwise, key is a string and does not need conversion
+        else {
+            this.keyToChildNode = keyToChildNode;
+        }
         this.clusters = clusters;
     }
 
@@ -66,4 +75,6 @@ class Node {
     public int childrenCount() {
         return keyToChildNode.size();
     }
+
+    public HashMap<Object, Node> allChildren() { return keyToChildNode; }
 }

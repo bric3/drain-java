@@ -98,9 +98,7 @@ public class Drain {
     }
 
     /**
-     * EDIT: Todor Krasimirov from DEVO
-     *
-     * Json creator and Json properties added allowing Drain-object import.
+     * Json creator and Json properties allowing Drain-object import.
      */
     @JsonCreator
     private Drain(@JsonProperty("depth") int depth,
@@ -109,18 +107,32 @@ public class Drain {
                   @JsonProperty("delimiters") String additionalDelimiters,
                   @JsonProperty("clusters") List<LogCluster> clusters,
                   @JsonProperty("root") Node root) {
-        this.depth = depth - ROOT_AND_LEAF_LEVELS;
+        this.depth = depth;
         this.similarityThreshold = similarityThreshold;
         this.maxChildPerNode = maxChildPerNode;
         this.delimiters = " " + additionalDelimiters;
-        this.clusters = clusters;
+        this.clusters = new ArrayList<LogCluster>();
         this.root = root;
+        logClustersLinker(this.root, this.clusters);
     }
 
     /**
-     * EDIT: Todor Krasimirov from DEVO
-     * 
-     * Add Drain-object exporting functionality which saves a drain model
+     * Links the list of clusters from tree nodes to Drain.clusters
+     * (needed when importing a model)
+     */
+    private void logClustersLinker(Node aux, List<LogCluster> clusters) {
+        if (aux != null) {
+            for (Node n: aux.allChildren().values()) {
+                if (!n.clusters().isEmpty()) {
+                    clusters.addAll(n.clusters());
+                }
+                logClustersLinker(n, clusters);
+            }
+        }
+    }
+
+    /**
+     * Drain-object exporting functionality which saves a drain model
      * in a json file at given path.
      */
     public void drainExport(String filePath) {
@@ -139,12 +151,10 @@ public class Drain {
     }
 
     /**
-     * EDIT: Todor Krasimirov from DEVO
-     * 
-     * Add a Drain-object importing functionality which creates a Drain instance from the input
+     * Drain-object importing functionality which creates a Drain instance from the input
      * json filepath containing Drain object attributes.
      */
-    public static Drain drainImport(String filePath) throws IOException, JsonMappingException, JsonParseException {
+    public static Drain drainImport(String filePath) throws IOException {
         // Create an Object mapper
         ObjectMapper objectMapper = new ObjectMapper();
 
@@ -153,8 +163,24 @@ public class Drain {
 
         System.out.printf("---- Recovering drain model from file %s %n",
                           filePath);
-        // Map the attributes from the file and return the Drain instance 
+        // Map the attributes from the file and return the Drain instance
         return objectMapper.readValue(inputDrain, Drain.class);
+    }
+
+    /**
+     * Returns the matching log cluster given a log message (null if no matchings)
+     *
+     */
+    public LogCluster findLogMessage(@Nonnull String message) {
+        // sprint message by delimiter / whitespaces
+        var contentTokens = tokenize(message);
+
+        // Search the prefix tree
+        var matchCluster = treeSearch(contentTokens);
+
+        //System.out.println("Found node: "+matchCluster);
+
+        return matchCluster;
     }
 
     /**
@@ -164,7 +190,7 @@ public class Drain {
      *
      * @param message The log message content
      */
-    public void parseLogMessage(@Nonnull String message) {
+    public LogCluster parseLogMessage(@Nonnull String message) {
         // sprint message by delimiter / whitespaces
         var contentTokens = tokenize(message);
 
@@ -180,6 +206,9 @@ public class Drain {
             // add the log to an existing cluster
             matchCluster.newSighting(contentTokens);
         }
+        //System.out.println("Found node: "+matchCluster);
+
+        return matchCluster;
     }
 
     private List<String> tokenize(String content) {
@@ -257,7 +286,6 @@ public class Drain {
         if (maxSimilarity >= this.similarityThreshold) {
             matchedCluster = maxCluster;
         }
-
         return matchedCluster;
     }
 

@@ -31,8 +31,6 @@ public class LogCluster {
     }
 
     /**
-     * EDIT: Todor Krasimirov from DEVO
-     *
      * Json creator and Json properties added to allow Drain-object import.
      */
     @JsonCreator
