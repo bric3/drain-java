@@ -31,8 +31,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 class MappedFileLineReaderTest {
     private final Path resourceDirectory = Paths.get("src", "test", "resources");
 
-    private final String testFile = "3-lines.txt";
-
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     @Test
@@ -51,7 +49,6 @@ class MappedFileLineReaderTest {
 
             assertThat(r.totalReadBytes()).isEqualTo(lineAppender.writtenBytes);
         }
-
     }
 
     @Test
@@ -80,7 +77,7 @@ class MappedFileLineReaderTest {
 
     @Test
     void find_start_position_given_last_lines() throws IOException {
-        try (var channel = FileChannel.open(resourceDirectory.resolve(testFile),
+        try (var channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
                                             StandardOpenOption.READ)) {
             var r = new MappedFileLineReader(new Config(true), IOReadAction.NO_OP);
 
@@ -95,7 +92,7 @@ class MappedFileLineReaderTest {
 
     @Test
     void can_read_from_position() throws IOException {
-        try (var channel = FileChannel.open(resourceDirectory.resolve(testFile),
+        try (var channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
                                             StandardOpenOption.READ)) {
             var sink = new ChannelSink(TestSink.nullSink());
             assertThat(sink.apply(channel, 0)).isEqualTo(183);
@@ -105,7 +102,7 @@ class MappedFileLineReaderTest {
 
     @Test
     void cannot_read_from_negative_position() throws IOException {
-        try (var channel = FileChannel.open(resourceDirectory.resolve(testFile),
+        try (var channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
                                             StandardOpenOption.READ)) {
             var sink = new ChannelSink(TestSink.nullSink());
             assertThatExceptionOfType(AssertionError.class).isThrownBy(
