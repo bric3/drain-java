@@ -1,6 +1,0 @@
-sent 550 bytes
-sent 110 bytes
-sent 800 bytes
-received 1000 bytes
-received 250 bytes
-sent 200 bytes
