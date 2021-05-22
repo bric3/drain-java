@@ -49,7 +49,6 @@ class MappedFileLineReaderTest {
 
             assertThat(r.totalReadBytes()).isEqualTo(lineAppender.writtenBytes);
         }
-
     }
 
     @Test
