@@ -31,9 +31,16 @@ jobs:
         wrapper-cache-enabled: true
         dependencies-cache-enabled : true
         configuration-cache-enabled : true
-    - uses: mikepenz/action-junit-report@v1
+#    - name: list build directory
+#      if: ${{ always() }}
+#      run: |
+#        ls build
+
+    - uses: mikepenz/action-junit-report@v2
+      if: ${{ always() }}
       name: Publish Test Report
       with:
+        check_name: Test Report - ${{ matrix.os }}
         report_paths: '**/build/test-results/test/TEST-*.xml'
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
