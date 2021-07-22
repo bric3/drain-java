@@ -16,14 +16,14 @@ class DrainBulkTest {
 
     @Test
     void smokeTest() throws IOException {
-        var drain = Drain.drainBuilder()
+        Drain drain = Drain.drainBuilder()
                          .additionalDelimiters("_")
                          .depth(4)
                          .build();
 
-        var lineCounter = new AtomicInteger();
+        AtomicInteger lineCounter = new AtomicInteger();
 
-        var stopwatch = Stopwatch.createStarted();
+        Stopwatch stopwatch = Stopwatch.createStarted();
         Files.lines(Paths.get("build/resources/test/SSH.log"),
                     StandardCharsets.UTF_8)
              .peek(__ -> lineCounter.incrementAndGet())

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -57,7 +58,7 @@ public class DrainJsonSerialization {
      * in a json file at given path.
      */
     public void saveState(Drain drain, Writer writer) {
-        final var mapper = JSON_MAPPER.writerWithDefaultPrettyPrinter();
+        final ObjectWriter mapper = JSON_MAPPER.writerWithDefaultPrettyPrinter();
         try {
             mapper.writeValue(writer, drain);
         } catch (IOException e) {
@@ -67,7 +68,7 @@ public class DrainJsonSerialization {
 
     public Drain loadState(Reader reader) {
         try {
-            final var drain = JSON_MAPPER.reader()
+            final Drain drain = JSON_MAPPER.reader()
                                          .withAttribute(ClustersRef.class, new ClustersRef())
                                          .readValue(reader, Drain.class);
             return drain;
@@ -120,7 +121,7 @@ public class DrainJsonSerialization {
     private static class DrainDeserializer extends JsonDeserializer<Drain> {
         @Override
         public Drain deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-            final var codec = p.getCodec();
+            final ObjectCodec codec = p.getCodec();
             final JsonNode jsonNode = codec.readTree(p);
 
             final ArrayList<LogCluster> clusters = codec.readValue(
@@ -149,17 +150,17 @@ public class DrainJsonSerialization {
         @Override
         public Node deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
             final ClustersRef clustersRef = (ClustersRef) ctxt.getAttribute(ClustersRef.class);
-            final var codec = p.getCodec();
+            final ObjectCodec codec = p.getCodec();
             final JsonNode jsonNode = codec.readTree(p);
 
-            final var nodeClusters = new ArrayList<LogCluster>();
+            final List<LogCluster> nodeClusters = new ArrayList<LogCluster>();
             for (JsonNode clusterId : jsonNode.get("clusters")) {
                 nodeClusters.add(clustersRef.get(clusterId.textValue()));
             }
 
-            final var depth = jsonNode.get("depth").asInt();
+            final int depth = jsonNode.get("depth").asInt();
 
-            final var jsonParser = codec.treeAsTokens(jsonNode.get("children"));
+            final JsonParser jsonParser = codec.treeAsTokens(jsonNode.get("children"));
             // This json parser starts with JsonTokenId.ID_NO_TOKEN,
             // the map deserializer expects the parser to have already
             // advanced to the first token otherwise this fails with
@@ -198,14 +199,18 @@ public class DrainJsonSerialization {
 
         public void hold(List<LogCluster> clusters) {
             this.clusters = clusters;
-            this.clusterIndex = clusters.stream().collect(Collectors.toUnmodifiableMap(
-                    logCluster -> toRef(logCluster.clusterId()),
-                    Function.identity()
-            ));
+//            this.clusterIndex = clusters.stream().collect(Collectors.toUnmodifiableMap(
+//                    logCluster -> toRef(logCluster.clusterId()),
+//                    Function.identity()
+//            ));
+            this.clusterIndex = new HashMap<>();
+            for(LogCluster logCluster:clusters){
+                this.clusterIndex.put(toRef(UUID.randomUUID()),logCluster);
+            }
         }
 
         public LogCluster get(String clusterId) {
-            final var logCluster = clusterIndex.get(clusterId);
+            final LogCluster logCluster = clusterIndex.get(clusterId);
             assert logCluster != null : "id:" + clusterId + " size:" + clusters.size() + "\n" + clusters;
             return logCluster;
         }

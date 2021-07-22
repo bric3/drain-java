@@ -64,7 +64,7 @@ public class LogCluster {
     }
 
     void newSighting(List<String> contentTokens) {
-        var newTemplateTokens = updateTemplate(contentTokens, logTemplateTokens);
+        List<String> newTemplateTokens = updateTemplate(contentTokens, logTemplateTokens);
         if (!newTemplateTokens.equals(logTemplateTokens)) {
             updateTokens(newTemplateTokens);
         }
@@ -76,11 +76,11 @@ public class LogCluster {
     List<String> updateTemplate(@Nonnull List<String> contentTokens,
                                 @Nonnull List<String> templateTokens) {
         assert contentTokens.size() == templateTokens.size();
-        var newTemplate = new ArrayList<String>(contentTokens.size());
+        List<String> newTemplate = new ArrayList<String>(contentTokens.size());
 
         for (int i = 0, tokensSize = contentTokens.size(); i < tokensSize; i++) {
-            var contentToken = contentTokens.get(i);
-            var templateToken = templateTokens.get(i);
+            String contentToken = contentTokens.get(i);
+            String templateToken = templateTokens.get(i);
             // TODO change to replace value at index
             if (contentToken.equals(templateToken)) {
                 newTemplate.add(contentToken);

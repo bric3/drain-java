@@ -21,6 +21,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Random;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -35,13 +36,13 @@ class MappedFileLineReaderTest {
 
     @Test
     void should_watch_with_line_reader(@TempDir Path tmpDir) throws IOException {
-        var path = Files.createTempFile(tmpDir, "test", "log");
+        Path path = Files.createTempFile(tmpDir, "test", "log");
 
-        var lineAppender = new LineAppender(path);
-        var config = new Config(true);
+        LineAppender lineAppender = new LineAppender(path);
+        Config config = new Config(true);
 
-        try (var r = new MappedFileLineReader(config, new LineConsumer(line -> {}, UTF_8))) {
-            var future = scheduler.scheduleAtFixedRate(lineAppender, 0, 400, TimeUnit.MILLISECONDS);
+        try (MappedFileLineReader r = new MappedFileLineReader(config, new LineConsumer(line -> {}, UTF_8))) {
+            Future future = scheduler.scheduleAtFixedRate(lineAppender, 0, 400, TimeUnit.MILLISECONDS);
             scheduler.schedule(() -> future.cancel(false), 4, TimeUnit.SECONDS);
             scheduler.schedule(r::close, 10, TimeUnit.SECONDS);
 
@@ -53,13 +54,13 @@ class MappedFileLineReaderTest {
 
     @Test
     void should_watch_with_channel_sink(@TempDir Path tmpDir) throws IOException {
-        var path = Files.createTempFile(tmpDir, "test", "log");
-        var lineAppender = new LineAppender(path);
-        var config = new Config(true);
+        Path path = Files.createTempFile(tmpDir, "test", "log");
+        LineAppender lineAppender = new LineAppender(path);
+        Config config = new Config(true);
 
-        var out = new ByteArrayOutputStream();
-        try (var r = new MappedFileLineReader(config, new ChannelSink(Channels.newChannel(out)))) {
-            var future = scheduler.scheduleAtFixedRate(lineAppender, 0, 400, TimeUnit.MILLISECONDS);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try (MappedFileLineReader r = new MappedFileLineReader(config, new ChannelSink(Channels.newChannel(out)))) {
+            Future future = scheduler.scheduleAtFixedRate(lineAppender, 0, 400, TimeUnit.MILLISECONDS);
             scheduler.schedule(() -> future.cancel(false), 4, TimeUnit.SECONDS);
             scheduler.schedule(r::close, 10, TimeUnit.SECONDS);
 
@@ -77,9 +78,9 @@ class MappedFileLineReaderTest {
 
     @Test
     void find_start_position_given_last_lines() throws IOException {
-        try (var channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
+        try (FileChannel channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
                                             StandardOpenOption.READ)) {
-            var r = new MappedFileLineReader(new Config(true), IOReadAction.NO_OP);
+            MappedFileLineReader r = new MappedFileLineReader(new Config(true), IOReadAction.NO_OP);
 
             assertThat(r.findTailStartPosition(channel, FromLine.fromEnd(10))).isEqualTo(0);
             assertThat(r.findTailStartPosition(channel, FromLine.fromEnd(2))).isEqualTo(42);
@@ -92,9 +93,9 @@ class MappedFileLineReaderTest {
 
     @Test
     void can_read_from_position() throws IOException {
-        try (var channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
+        try (FileChannel channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
                                             StandardOpenOption.READ)) {
-            var sink = new ChannelSink(TestSink.nullSink());
+            ChannelSink sink = new ChannelSink(TestSink.nullSink());
             assertThat(sink.apply(channel, 0)).isEqualTo(183);
             assertThat(sink.apply(channel, 41)).isEqualTo(142);
         }
@@ -102,9 +103,9 @@ class MappedFileLineReaderTest {
 
     @Test
     void cannot_read_from_negative_position() throws IOException {
-        try (var channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
+        try (FileChannel channel = FileChannel.open(resourceDirectory.resolve("3-lines.txt"),
                                             StandardOpenOption.READ)) {
-            var sink = new ChannelSink(TestSink.nullSink());
+            ChannelSink sink = new ChannelSink(TestSink.nullSink());
             assertThatExceptionOfType(AssertionError.class).isThrownBy(
                     () -> sink.apply(channel, -1)
             );
@@ -122,16 +123,16 @@ class MappedFileLineReaderTest {
 
         @Override
         public void run() {
-            var howManyLines = new Random().nextInt(10);
+            int howManyLines = new Random().nextInt(10);
 
-            var sb = new StringBuilder();
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i <= howManyLines; i++) {
                 sb.append("line ").append(lineCounter++).append("\n");
             }
 
 
             try {
-                var encoded = UTF_8.encode(CharBuffer.wrap(sb));
+                ByteBuffer encoded = UTF_8.encode(CharBuffer.wrap(sb));
                 writtenBytes += encoded.capacity();
                 Files.write(path, encoded.array(), StandardOpenOption.APPEND);
             } catch (IOException e) {
@@ -159,7 +160,7 @@ class MappedFileLineReaderTest {
 
         @Override
         public int write(ByteBuffer src) throws IOException {
-            var remaining = src.remaining();
+            int remaining = src.remaining();
             writenBytes += remaining;
             return remaining;
         }

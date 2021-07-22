@@ -20,13 +20,13 @@ public class DrainFile {
         assert file != null;
         assert fromLine != null;
 
-        var drain = Drain.drainBuilder()
+        Drain drain = Drain.drainBuilder()
                          .additionalDelimiters("_")
                          .depth(4)
                          .build();
 
-        var lineCounter = new AtomicInteger();
-        var stopwatch = Stopwatch.createStarted();
+        AtomicInteger lineCounter = new AtomicInteger();
+        Stopwatch stopwatch = Stopwatch.createStarted();
         Consumer<String> drainConsumer = l -> {
             lineCounter.incrementAndGet();
 
@@ -54,12 +54,12 @@ public class DrainFile {
     }
 
     private String preProcess(String line) {
-        var parseAfterCol = config.drain.parseAfterCol;
+        int parseAfterCol = config.drain.parseAfterCol;
         if (parseAfterCol > 0) {
             return line.substring(parseAfterCol);
         }
 
-        var parseAfterStr = config.drain.parseAfterStr;
+        String parseAfterStr = config.drain.parseAfterStr;
         if (!parseAfterStr.isEmpty()) {
             return line.substring(line.indexOf(parseAfterStr) + parseAfterStr.length());
         }

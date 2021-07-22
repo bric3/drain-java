@@ -7,14 +7,14 @@ class FromLine {
     long number = 10;
 
     static FromLine fromStart(long lineNumber) {
-        var startFromLine = new FromLine();
+        FromLine startFromLine = new FromLine();
         startFromLine.fromStart = true;
         startFromLine.number = lineNumber;
         return startFromLine;
     }
 
     static FromLine fromEnd(long lineNumber) {
-        var startFromLine = new FromLine();
+        FromLine startFromLine = new FromLine();
         startFromLine.fromStart = false;
         startFromLine.number = lineNumber;
         return startFromLine;
@@ -23,7 +23,7 @@ class FromLine {
     static class StartFromLineConverter implements CommandLine.ITypeConverter<FromLine> {
         @Override
         public FromLine convert(String value) {
-            var result = new FromLine();
+            FromLine result = new FromLine();
             if (value.charAt(0) == '+') {
                 result.fromStart = true;
                 value = value.substring(1);

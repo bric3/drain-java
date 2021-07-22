@@ -104,10 +104,10 @@ public class Drain {
      */
     public void parseLogMessage(@Nonnull String message) {
         // sprint message by delimiter / whitespaces
-        var contentTokens = tokenize(message);
+        List<String> contentTokens = tokenize(message);
 
         // Search the prefix tree
-        var matchCluster = treeSearch(contentTokens);
+        LogCluster matchCluster = treeSearch(contentTokens);
 
         if (matchCluster == null) {
             // create cluster if it doesn't exists, using log content tokens as template tokens
@@ -131,8 +131,8 @@ public class Drain {
     LogCluster treeSearch(@Nonnull List<String> logTokens) {
 
         // at first level, children are grouped by token (word) count
-        var tokensCount = logTokens.size();
-        var node = this.root.get(tokensCount);
+        int tokensCount = logTokens.size();
+        Node node = this.root.get(tokensCount);
 
         // the prefix tree is empty
         if (node == null) {
@@ -156,7 +156,7 @@ public class Drain {
             }
 
             // descend
-            var nextNode = node.get(token);
+            Node nextNode = node.get(token);
             // if null try get from generic pattern
             if (nextNode == null) {
                 nextNode = node.get(PARAM_MARKER);
@@ -182,7 +182,7 @@ public class Drain {
         LogCluster maxCluster = null;
 
         for (LogCluster cluster : clusters) {
-            var seqDistance = computeSeqDistance(cluster.internalTokens(), logTokens);
+            SeqDistance seqDistance = computeSeqDistance(cluster.internalTokens(), logTokens);
             if (seqDistance.similarity > maxSimilarity
                 || (seqDistance.similarity == maxSimilarity
                     && seqDistance.paramCount > maxParamCount)) {
@@ -238,7 +238,7 @@ public class Drain {
     private void addLogClusterToPrefixTree(@Nonnull LogCluster newLogCluster) {
         int tokensCount = newLogCluster.internalTokens().size();
 
-        var node = this.root.getOrCreateChild(tokensCount);
+        Node node = this.root.getOrCreateChild(tokensCount);
 
         // handle case of empty log message
         if (tokensCount == 0) {
@@ -302,7 +302,9 @@ public class Drain {
      * @return Non modifiable list of current clusters.
      */
     public List<LogCluster> clusters() {
-        return List.copyOf(clusters);
+        return new ArrayList<LogCluster>(clusters);
+//        TODO
+//        return List.copyOf(clusters);
     }
 
     Node prefixTree() {

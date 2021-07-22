@@ -1,19 +1,12 @@
 package com.github.bric3.drain;
 
-import java.io.BufferedReader;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.Charset;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
+import java.nio.file.*;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,15 +33,15 @@ public class MappedFileLineReader implements Closeable {
         assert tailFromLine != null;
 
 
-        try (var ws = FileSystems.getDefault().newWatchService();
-             var sourceChannel = FileChannel.open(path, StandardOpenOption.READ)) {
-            var startPosition = findTailStartPosition(sourceChannel, tailFromLine);
+        try (WatchService ws = FileSystems.getDefault().newWatchService();
+             FileChannel sourceChannel = FileChannel.open(path, StandardOpenOption.READ)) {
+            long startPosition = findTailStartPosition(sourceChannel, tailFromLine);
             if (config.verbose) {
                 config.out.printf("Reading file from position : %d%n", startPosition);
             }
 
-            var position = startPosition;
-            var readBytes = readAction.apply(sourceChannel, startPosition);
+            long position = startPosition;
+            long readBytes = readAction.apply(sourceChannel, startPosition);
             totalReadBytes += readBytes;
             position += readBytes;
             if (config.verbose) {
@@ -78,7 +71,7 @@ public class MappedFileLineReader implements Closeable {
                     for (WatchEvent<?> event : wk.pollEvents()) {
                         if (event.kind() == StandardWatchEventKinds.ENTRY_MODIFY
                             && Objects.equals(event.context(), path.getFileName())) {
-                            var previousPosition = position;
+                            long previousPosition = position;
                             readBytes = readAction.apply(sourceChannel, position);
                             totalReadBytes += readBytes;
                             position += readBytes;
@@ -90,7 +83,7 @@ public class MappedFileLineReader implements Closeable {
                             }
                         }
                     }
-                    var valid = wk.reset();
+                    boolean valid = wk.reset();
                     if (!valid) {
                         break; // exit
                     }
@@ -138,8 +131,8 @@ public class MappedFileLineReader implements Closeable {
         }
 
         private long readByLines(FileChannel sourceChannel, long startPosition, Consumer<String> stringConsumer) throws IOException {
-            var reader = Channels.newReader(sourceChannel, charset);  // investigate decoder customization
-            var br = new BufferedReader(reader); // handles new lines and EOF
+            Reader reader = Channels.newReader(sourceChannel, charset.name());  // investigate decoder customization
+            BufferedReader br = new BufferedReader(reader); // handles new lines and EOF
 
             sourceChannel.position(startPosition); // avoid reading the file if unnecessary
             br.lines()
@@ -174,7 +167,7 @@ public class MappedFileLineReader implements Closeable {
                           WritableByteChannel sink) throws IOException {
             assert pathChannel != null && sink != null;
             assert startPosition >= 0;
-            var fileSize = pathChannel.size();
+            long fileSize = pathChannel.size();
 
             return pathChannel.transferTo(startPosition, fileSize, sink);
         }
@@ -183,7 +176,7 @@ public class MappedFileLineReader implements Closeable {
     long findTailStartPosition(FileChannel channel, FromLine fromLine) throws IOException {
         // straw man find start position
         // this implementation hasn't been tested with two char line endings  (CR (0x0D) and LF (0x0A))
-        var buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
+        MappedByteBuffer buffer = channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size());
 
         if (!fromLine.fromStart) {
             if (fromLine.number == 0) {

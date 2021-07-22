@@ -31,7 +31,7 @@ class DrainJsonSerializationTest {
 
     @Test
     void serde2_should_result_in_same_state() throws IOException {
-        var drain = Drain.drainBuilder()
+        Drain drain = Drain.drainBuilder()
                          .additionalDelimiters("_")
                          .depth(4)
                          .build();
@@ -58,7 +58,7 @@ class DrainJsonSerializationTest {
 
     @Test
     void drain_with_reloaded_state_can_resume_log_mining() throws IOException {
-        var drain = initDrain("Unity.log", l -> l.substring(l.indexOf(": ") + 2));
+        Drain drain = initDrain("Unity.log", l -> l.substring(l.indexOf(": ") + 2));
 
         Drain drainReloaded = serde(drain);
         assertThat(drainReloaded.clusters()).isEqualTo(drain.clusters());
@@ -78,7 +78,7 @@ class DrainJsonSerializationTest {
     }
 
     private Drain initDrain(String logFile, Function<String, String> normalizingFunction) throws IOException {
-        var drain = Drain.drainBuilder()
+        Drain drain = Drain.drainBuilder()
                          .additionalDelimiters("_")
                          .depth(4)
                          .build();
@@ -90,8 +90,8 @@ class DrainJsonSerializationTest {
     }
 
     private Drain serde(Drain drain) throws IOException {
-        final var serde = new DrainJsonSerialization();
-        final var writer = new StringWriter();
+        final DrainJsonSerialization serde = new DrainJsonSerialization();
+        final StringWriter writer = new StringWriter();
         serde.saveState(drain, writer);
 
         return serde.loadState(new StringReader(writer.toString()));

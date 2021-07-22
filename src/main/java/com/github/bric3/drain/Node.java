@@ -58,7 +58,9 @@ class Node {
     }
 
     Map<Object, Node> childMappings() {
-        return Map.copyOf(keyToChildNode);
+        return new HashMap<Object,Node>(keyToChildNode);
+//        TODO
+//        return Map.copyOf(keyToChildNode);
     }
 
     @Override

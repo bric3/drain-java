@@ -77,7 +77,7 @@ public class Main implements Runnable {
             System.exit(ERR_NO_FILEPATH);
         }
 
-        var config = new Config(verbose, parseAfterStr, parseAfterCol);
+        Config config = new Config(verbose, parseAfterStr, parseAfterCol);
 
         if (drain) {
             new DrainFile(config).drain(file, fromLine, follow);
