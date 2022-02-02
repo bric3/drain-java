@@ -18,7 +18,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.12.3")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.12.3")
 
-    annotationProcessor("info.picocli:picocli-codegen:4.6.1")
+    annotationProcessor("info.picocli:picocli-codegen:4.6.2")
 
     testImplementation("org.assertj:assertj-core:3.19.0")
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
