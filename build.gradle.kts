@@ -11,8 +11,8 @@ import de.undercouch.gradle.tasks.download.Download
 
 plugins {
     application
-    id("de.undercouch.download") version ("4.1.1")
-    id("com.github.johnrengelman.shadow") version ("7.0.0")
+    id("de.undercouch.download") version ("5.0.1")
+    id("com.github.johnrengelman.shadow") version ("7.1.2")
     id("com.github.ben-manes.versions") version ("0.38.0")
 
     id("com.github.hierynomus.license") version "0.16.1"
@@ -96,8 +96,7 @@ license {
     ignoreFailures = false
     excludes(
             listOf(
-                    "**/*.java.template",
-                    "**/testData/*.java",
+                    "**/3-lines.txt"
             )
     )
 
