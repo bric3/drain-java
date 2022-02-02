@@ -22,7 +22,7 @@ repositories {
 }
 
 dependencies {
-    implementation(libs.guava)
+    implementation(libs.jsr305)
     implementation(libs.picocli)
     implementation(libs.bundles.jackson)
 

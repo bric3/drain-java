@@ -9,13 +9,11 @@
  */
 package com.github.bric3.drain;
 
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Splitter;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.StringTokenizer;
 
 /**
  * Drain log pattern miner.
@@ -130,10 +128,17 @@ public class Drain {
     }
 
     private List<String> tokenize(String content) {
-        return Splitter.on(CharMatcher.anyOf(delimiters))
-                            .trimResults()
-                            .omitEmptyStrings()
-                            .splitToList(content);
+        var stringTokenizer = new StringTokenizer(content, delimiters);
+
+        var tokens = new ArrayList<String>(stringTokenizer.countTokens());
+        while (stringTokenizer.hasMoreTokens()) {
+            var trimmedToken = stringTokenizer.nextToken();
+            if (!trimmedToken.isBlank()) {
+                tokens.add(trimmedToken.trim());
+            }
+        }
+
+        return tokens;
     }
 
     private @Nullable

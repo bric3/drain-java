@@ -18,7 +18,7 @@ junit = "5.8.2"
 
 [libraries]
 
-guava = { module = "com.google.guava:guava", version.ref = "guava" }
+jsr305 = { module = "com.google.code.findbugs:jsr305", version = "3.0.2" }
 
 picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 picocli-codegen = { module = "info.picocli:picocli-codegen", version.ref = "picocli" }
