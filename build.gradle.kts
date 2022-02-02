@@ -13,7 +13,7 @@ repositories {
 
 dependencies {
     implementation("com.google.guava:guava:30.1.1-jre")
-    implementation("info.picocli:picocli:4.6.1")
+    implementation("info.picocli:picocli:4.6.2")
     implementation("com.fasterxml.jackson.core:jackson-core:2.12.3")
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.12.3")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.12.3")
