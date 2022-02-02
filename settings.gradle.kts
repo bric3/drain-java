@@ -8,3 +8,5 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 rootProject.name = "drain-java"
+
+enableFeaturePreview("VERSION_CATALOGS")

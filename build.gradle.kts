@@ -23,17 +23,15 @@ repositories {
 }
 
 dependencies {
-    implementation("com.google.guava:guava:30.1.1-jre")
-    implementation("info.picocli:picocli:4.6.2")
-    implementation("com.fasterxml.jackson.core:jackson-core:2.13.1")
-    implementation("com.fasterxml.jackson.core:jackson-annotations:2.13.1")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1")
+    implementation(libs.guava)
+    implementation(libs.picocli)
+    implementation(libs.bundles.jackson)
 
-    annotationProcessor("info.picocli:picocli-codegen:4.6.2")
+    annotationProcessor(libs.picocli.codegen)
 
-    testImplementation("org.assertj:assertj-core:3.22.0")
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.8.2")
+    testImplementation(libs.assertj.core)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
 }
 
 application {
@@ -73,8 +71,8 @@ tasks {
     test {
         useJUnitPlatform()
         reports {
-            junitXml.setEnabled(true)
-            html.setEnabled(true)
+            junitXml.required.set(true)
+            html.required.set(true)
         }
     }
 
