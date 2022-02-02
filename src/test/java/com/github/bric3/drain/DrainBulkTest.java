@@ -17,7 +17,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,14 +51,74 @@ class DrainBulkTest {
                           lineCounter.get(),
                           stopwatch,
                           drain.clusters().size());
-        drain.clusters()
-             .stream()
-             .sorted(Comparator.comparing(LogCluster::sightings).reversed())
-             .forEach(System.out::println);
 
         assertThat(drain.clusters()).hasSize(51);
+
+        var sortedClusters = drain.clusters()
+                                  .stream()
+                                  .sorted(Comparator.comparing(LogCluster::sightings).reversed())
+                                  .collect(Collectors.toList());
+
+//        sortedClusters.forEach(System.out::println);
+
+        // based on cluster found in https://zenodo.org/record/3227177/files/SSH.tar.gz
+        assertCluster(sortedClusters, 0, 140768, "Failed password for <*> from <*> port <*> ssh2");
+        assertCluster(sortedClusters, 1, 140701, "pam unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= <*> <*>");
+        assertCluster(sortedClusters, 2, 68958, "Connection closed by <*> [preauth]");
+        assertCluster(sortedClusters, 3, 46642, "Received disconnect from <*> 11: <*> <*> <*>");
+        assertCluster(sortedClusters, 4, 37963, "PAM service(sshd) ignoring max retries; <*> > 3");
+        assertCluster(sortedClusters, 5, 37298, "Disconnecting: Too many authentication failures for <*> [preauth]");
+        assertCluster(sortedClusters, 6, 37029, "PAM <*> more authentication <*> logname= uid=0 euid=0 tty=ssh ruser= <*> <*>");
+        assertCluster(sortedClusters, 7, 36967, "message repeated <*> times: [ Failed password for <*> from <*> port <*> ssh2]");
+        assertCluster(sortedClusters, 8, 20241, "Failed <*> for invalid user <*> from <*> port <*> ssh2");
+        assertCluster(sortedClusters, 9, 19852, "pam unix(sshd:auth): check pass; user unknown");
+        assertCluster(sortedClusters, 10, 18909, "reverse mapping checking getaddrinfo for <*> <*> failed - POSSIBLE BREAK-IN ATTEMPT!");
+        assertCluster(sortedClusters, 11, 14551, "Invalid user <*> from <*>");
+        assertCluster(sortedClusters, 12, 14551, "input userauth request: invalid user <*> [preauth]");
+        assertCluster(sortedClusters, 13, 14356, "pam unix(sshd:auth): authentication failure; logname= uid=0 euid=0 tty=ssh ruser= <*>");
+        assertCluster(sortedClusters, 14, 1289, "PAM <*> more authentication <*> logname= uid=0 euid=0 tty=ssh ruser= <*>");
+        assertCluster(sortedClusters, 15, 952, "fatal: Read from socket failed: Connection reset by peer [preauth]");
+        assertCluster(sortedClusters, 16, 930, "error: Received disconnect from 103.99.0.122: 14: No more user authentication methods available. [preauth]");
+        assertCluster(sortedClusters, 17, 838, "Did not receive identification string from <*>");
+        assertCluster(sortedClusters, 18, 592, "Received disconnect from <*> 11: Closed due to user request. [preauth]");
+        assertCluster(sortedClusters, 19, 497, "Address <*> maps to <*> but this does not map back to the address - POSSIBLE BREAK-IN ATTEMPT!");
+        assertCluster(sortedClusters, 20, 182, "Accepted password for <*> from <*> port <*> ssh2");
+        assertCluster(sortedClusters, 21, 182, "pam unix(sshd:session): session opened for user <*> by (uid=0)");
+        assertCluster(sortedClusters, 22, 182, "pam unix(sshd:session): session closed for user <*>");
+        assertCluster(sortedClusters, 23, 177, "error: Received disconnect from <*> 3: com.jcraft.jsch.JSchException: Auth <*> [preauth]");
+        assertCluster(sortedClusters, 24, 108, "Received disconnect from <*> 11: [preauth]");
+        assertCluster(sortedClusters, 25, 92, "Received disconnect from 139.59.209.18: 11: Normal Shutdown, Thank you for playing [preauth]");
+        assertCluster(sortedClusters, 26, 87, "Received disconnect from <*> 11: <*> <*> <*> [preauth]");
+        assertCluster(sortedClusters, 27, 60, "Received disconnect from <*> 11: disconnect [preauth]");
+        assertCluster(sortedClusters, 28, 30, "Invalid user <*> <*> from <*>");
+        assertCluster(sortedClusters, 29, 30, "input userauth request: invalid user <*> <*> [preauth]");
+        assertCluster(sortedClusters, 30, 30, "Failed password for invalid user <*> <*> from <*> port <*> ssh2");
+        assertCluster(sortedClusters, 31, 13, "Invalid user from <*>");
+        assertCluster(sortedClusters, 32, 13, "input userauth request: invalid user [preauth]");
+        assertCluster(sortedClusters, 33, 13, "Failed <*> for invalid user from <*> port <*> ssh2");
+        assertCluster(sortedClusters, 34, 8, "Bad protocol version identification <*> <*> <*> from <*> port <*>");
+        assertCluster(sortedClusters, 35, 7, "Bad protocol version identification <*> <*> from <*> port <*>");
+        assertCluster(sortedClusters, 36, 7, "Bad protocol version identification <*> from <*> port <*>");
+        assertCluster(sortedClusters, 37, 6, "fatal: no hostkey alg [preauth]");
+        assertCluster(sortedClusters, 38, 6, "error: Received disconnect from <*> <*> <*> <*> <*> <*> [preauth]");
+        assertCluster(sortedClusters, 39, 6, "error: connect to <*> port 22: failed.");
+        assertCluster(sortedClusters, 40, 6, "Server listening on <*> port <*>");
+        assertCluster(sortedClusters, 41, 3, "fatal: Write failed: Connection reset by peer [preauth]");
+        assertCluster(sortedClusters, 42, 3, "error: Received disconnect from 195.154.45.62: 3: com.jcraft.jsch.JSchException: timeout in waiting for rekeying process. [preauth]");
+        assertCluster(sortedClusters, 43, 3, "Received disconnect from <*> 11: Disconnect requested by Windows SSH Client.");
+        assertCluster(sortedClusters, 44, 2, "error: Received disconnect from 191.96.249.68: 13: User request [preauth]");
+        assertCluster(sortedClusters, 45, 2, "error: Received disconnect from 212.83.176.1: 3: org.vngx.jsch.userauth.AuthCancelException: User authentication canceled by user [preauth]");
+        assertCluster(sortedClusters, 46, 1, "Bad packet length 1819045217. [preauth]");
+        assertCluster(sortedClusters, 47, 1, "Disconnecting: Packet corrupt [preauth]");
+        assertCluster(sortedClusters, 48, 1, "Received disconnect from 67.160.100.130: 11:");
+        assertCluster(sortedClusters, 49, 1, "Corrupted MAC on input. [preauth]");
+        assertCluster(sortedClusters, 50, 1, "syslogin perform logout: logout() returned an error");
     }
 
+    private void assertCluster(List<LogCluster> sortedClusters, int i, int sigthings, String tokens) {
+        assertThat(sortedClusters.get(i).sightings()).isEqualTo(sigthings);
+        assertThat(sortedClusters.get(i).tokens().stream().collect(Collectors.joining(" "))).isEqualTo(tokens);
+    }
 /*
 Python without masking:
 =======================
