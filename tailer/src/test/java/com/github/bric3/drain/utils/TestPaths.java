@@ -7,9 +7,12 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+package com.github.bric3.drain.utils;
 
-rootProject.name = "drain-java"
+import java.nio.file.Path;
 
-include("drain-java-core", "drain-java-jackson", "tailer")
-
+public class TestPaths {
+    public static Path get(String first, String... more) {
+        return Path.of("build/resources/test").resolve(Path.of(first, more));
+    }
+}
