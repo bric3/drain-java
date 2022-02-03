@@ -15,7 +15,7 @@ class Node {
     final int depth;
     final Object key;
     private final HashMap<Object, Node> keyToChildNode;
-    private final List<LogCluster> clusters;
+    private final List<InternalLogCluster> clusters;
 
     public Node(Object key, int depth) {
         this.key = key;
@@ -24,7 +24,7 @@ class Node {
         this.clusters = new ArrayList<>();
     }
 
-    Node(Object key, int depth, HashMap<Object, Node> keyToChildNode, List<LogCluster> clusters) {
+    Node(Object key, int depth, HashMap<Object, Node> keyToChildNode, List<InternalLogCluster> clusters) {
         this.depth = depth;
         this.key = key;
         this.keyToChildNode = keyToChildNode;
@@ -42,15 +42,15 @@ class Node {
         );
     }
 
-    public LogCluster clusterOf(int tokenCount) {
+    InternalLogCluster clusterOf(int tokenCount) {
         return clusters.get(tokenCount);
     }
 
-    public List<LogCluster> clusters() {
+    List<InternalLogCluster> clusters() {
         return clusters;
     }
 
-    public void appendCluster(LogCluster cluster) {
+    void appendCluster(InternalLogCluster cluster) {
         clusters.add(cluster);
     }
 

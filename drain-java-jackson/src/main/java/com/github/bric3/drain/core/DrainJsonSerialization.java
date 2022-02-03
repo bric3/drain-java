@@ -14,7 +14,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
@@ -58,7 +57,7 @@ public class DrainJsonSerialization {
                                          .addSerializer(Node.class, new TreeNodeSerializer())
                                          .addDeserializer(Node.class, new TreeNodeDeserializer()))
                       .visibility(PropertyAccessor.FIELD, Visibility.ANY)
-                      .addMixIn(LogCluster.class, LogClusterMixin.class)
+                      .addMixIn(InternalLogCluster.class, LogClusterMixin.class)
                       .build();
 
     /**
@@ -76,10 +75,9 @@ public class DrainJsonSerialization {
 
     public Drain loadState(Reader reader) {
         try {
-            final var drain = JSON_MAPPER.reader()
-                                         .withAttribute(ClustersRef.class, new ClustersRef())
-                                         .readValue(reader, Drain.class);
-            return drain;
+            return JSON_MAPPER.reader()
+                              .withAttribute(ClustersRef.class, new ClustersRef())
+                              .readValue(reader, Drain.class);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -94,7 +92,7 @@ public class DrainJsonSerialization {
             gen.writeObjectField("children", value.childMappings());
             gen.writeArrayFieldStart("clusters");
 
-            for (LogCluster c : value.clusters()) {
+            for (InternalLogCluster c : value.clusters()) {
                 gen.writeString(ClustersRef.toRef(c.clusterId()));
             }
             gen.writeEndArray();
@@ -128,13 +126,13 @@ public class DrainJsonSerialization {
 
     private static class DrainDeserializer extends JsonDeserializer<Drain> {
         @Override
-        public Drain deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-            final var codec = p.getCodec();
-            final JsonNode jsonNode = codec.readTree(p);
+        public Drain deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            var codec = p.getCodec();
+            JsonNode jsonNode = codec.readTree(p);
 
-            final ArrayList<LogCluster> clusters = codec.readValue(
+            final ArrayList<InternalLogCluster> clusters = codec.readValue(
                     codec.treeAsTokens(jsonNode.get("clusters")),
-                    ctxt.getTypeFactory().constructCollectionType(ArrayList.class, LogCluster.class));
+                    ctxt.getTypeFactory().constructCollectionType(ArrayList.class, InternalLogCluster.class));
 
             ((ClustersRef) ctxt.getAttribute(ClustersRef.class)).hold(clusters);
 
@@ -156,12 +154,12 @@ public class DrainJsonSerialization {
 
     private static class TreeNodeDeserializer extends JsonDeserializer<Node> {
         @Override
-        public Node deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+        public Node deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             final ClustersRef clustersRef = (ClustersRef) ctxt.getAttribute(ClustersRef.class);
             final var codec = p.getCodec();
             final JsonNode jsonNode = codec.readTree(p);
 
-            final var nodeClusters = new ArrayList<LogCluster>();
+            final var nodeClusters = new ArrayList<InternalLogCluster>();
             for (JsonNode clusterId : jsonNode.get("clusters")) {
                 nodeClusters.add(clustersRef.get(clusterId.textValue()));
             }
@@ -198,14 +196,14 @@ public class DrainJsonSerialization {
 
 
     static class ClustersRef {
-        private List<LogCluster> clusters;
-        private Map<String, LogCluster> clusterIndex;
+        private List<InternalLogCluster> clusters;
+        private Map<String, InternalLogCluster> clusterIndex;
 
         public static String toRef(UUID clusterId) {
             return "clusterId-" + clusterId;
         }
 
-        public void hold(List<LogCluster> clusters) {
+        public void hold(List<InternalLogCluster> clusters) {
             this.clusters = clusters;
             this.clusterIndex = clusters.stream().collect(Collectors.toUnmodifiableMap(
                     logCluster -> toRef(logCluster.clusterId()),
@@ -213,7 +211,7 @@ public class DrainJsonSerialization {
             ));
         }
 
-        public LogCluster get(String clusterId) {
+        public InternalLogCluster get(String clusterId) {
             final var logCluster = clusterIndex.get(clusterId);
             assert logCluster != null : "id:" + clusterId + " size:" + clusters.size() + "\n" + clusters;
             return logCluster;

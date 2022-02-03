@@ -10,12 +10,12 @@
 package com.github.bric3.drain.core;
 
 import com.github.bric3.drain.utils.Stopwatch;
+import com.github.bric3.drain.utils.TestPaths;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -35,7 +35,7 @@ class DrainBulkTest {
         var lineCounter = new AtomicInteger();
 
         var stopwatch = Stopwatch.createStarted();
-        Files.lines(Paths.get("build/resources/test/SSH.log"),
+        Files.lines(TestPaths.get("SSH.log"),
                     StandardCharsets.UTF_8)
              .peek(__ -> lineCounter.incrementAndGet())
              .map(l -> l.substring(l.indexOf("]: ") + 3)) // removes this part: "Dec 10 06:55:46 LabSZ sshd[24200]: "
@@ -117,8 +117,9 @@ class DrainBulkTest {
 
     private void assertCluster(List<LogCluster> sortedClusters, int i, int sigthings, String tokens) {
         assertThat(sortedClusters.get(i).sightings()).isEqualTo(sigthings);
-        assertThat(sortedClusters.get(i).tokens().stream().collect(Collectors.joining(" "))).isEqualTo(tokens);
+        assertThat(String.join(" ", sortedClusters.get(i).tokens())).isEqualTo(tokens);
     }
+}
 /*
 Python without masking:
 =======================
@@ -232,5 +233,3 @@ Java implementation:
 0045 (size 1): Corrupted MAC on input. [preauth]
 0051 (size 1): syslogin perform logout: logout() returned an error
 */
-
-}

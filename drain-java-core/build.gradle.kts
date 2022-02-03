@@ -11,7 +11,7 @@
 plugins {
     `java-library`
     alias(libs.plugins.download)
-    alias(libs.plugins.shadow)
+//    alias(libs.plugins.shadow)
 }
 
 repositories {
@@ -42,15 +42,16 @@ tasks {
         options.release.set(11)
     }
 
-    val downloadFile by registering(de.undercouch.gradle.tasks.download.Download::class) {
-        src("https://zenodo.org/record/3227177/files/SSH.tar.gz")
-        dest(File(buildDir, "SSH.tar.gz"))
-        onlyIfModified(true)
-    }
+//    val downloadFile by registering(de.undercouch.gradle.tasks.download.Download::class) {
+//        src("https://zenodo.org/record/3227177/files/SSH.tar.gz")
+//        dest(File(buildDir, "SSH.tar.gz"))
+//        onlyIfModified(true)
+//    }
 
     processTestResources {
-        dependsOn(downloadFile)
-        from(tarTree(File(buildDir, "SSH.tar.gz")))
+        dependsOn(rootProject.tasks.getByPath("unpackFile"))
+//        dependsOn(rootProject.tasks.getByPath("downloadFile"))
+//        from(tarTree(File(buildDir, "SSH.tar.gz")))
     }
 
     test {

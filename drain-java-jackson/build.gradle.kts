@@ -19,6 +19,7 @@ repositories {
 dependencies {
     implementation(projects.drainJavaCore)
     implementation(libs.jsr305)
+    implementation(libs.bundles.jackson)
 
     testImplementation(libs.assertj.core)
     testImplementation(libs.junit.jupiter.api)
@@ -42,5 +43,11 @@ tasks {
             junitXml.required.set(true)
             html.required.set(true)
         }
+    }
+
+    processTestResources {
+        dependsOn(rootProject.tasks.getByPath("unpackFile"))
+//        dependsOn(rootProject.tasks.getByPath("downloadFile"))
+//        from(tarTree(File(buildDir, "SSH.tar.gz")))
     }
 }

@@ -10,7 +10,6 @@
 
 plugins {
     application
-    alias(libs.plugins.download)
     alias(libs.plugins.shadow)
 }
 
@@ -23,7 +22,6 @@ dependencies {
     implementation(projects.drainJavaJackson)
     implementation(libs.jsr305)
     implementation(libs.picocli)
-    implementation(libs.bundles.jackson)
 
     annotationProcessor(libs.picocli.codegen)
 
@@ -49,17 +47,6 @@ tasks {
 
     withType(JavaCompile::class) {
         options.release.set(11)
-    }
-
-    val downloadFile by registering(de.undercouch.gradle.tasks.download.Download::class) {
-        src("https://zenodo.org/record/3227177/files/SSH.tar.gz")
-        dest(File(buildDir, "SSH.tar.gz"))
-        onlyIfModified(true)
-    }
-
-    processTestResources {
-        dependsOn(downloadFile)
-        from(tarTree(File(buildDir, "SSH.tar.gz")))
     }
 
     test {

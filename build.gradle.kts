@@ -11,6 +11,7 @@
 plugins {
     alias(libs.plugins.versions)
     alias(libs.plugins.license)
+    alias(libs.plugins.download)
 }
 
 repositories {
@@ -19,6 +20,20 @@ repositories {
 
 group = "com.github.bric3.drain"
 version = "1.0-SNAPSHOT"
+
+tasks.register<de.undercouch.gradle.tasks.download.Download>("downloadFile") {
+    src("https://zenodo.org/record/3227177/files/SSH.tar.gz")
+    dest(File(buildDir, "SSH.tar.gz"))
+    onlyIfModified(true)
+}
+
+tasks.register<Copy>("unpackFile") {
+    dependsOn("downloadFile")
+    from(tarTree(File(buildDir, "SSH.tar.gz")))
+    into(buildDir)
+}
+
+
 
 license {
     ext["year"] = "2021, Today"
@@ -46,7 +61,7 @@ license {
             )
     )
 }
-tasks.register("licenseCheckForProjectFiles", com.hierynomus.gradle.license.tasks.LicenseCheck::class) {
+tasks.register<com.hierynomus.gradle.license.tasks.LicenseCheck>("licenseCheckForProjectFiles") {
     source = fileTree(project.projectDir) {
         include("**/*.kt", "**/*.kts")
         include("**/*.toml")
@@ -54,7 +69,7 @@ tasks.register("licenseCheckForProjectFiles", com.hierynomus.gradle.license.task
     }
 }
 tasks["license"].dependsOn("licenseCheckForProjectFiles")
-tasks.register("licenseFormatForProjectFiles", com.hierynomus.gradle.license.tasks.LicenseFormat::class) {
+tasks.register<com.hierynomus.gradle.license.tasks.LicenseFormat>("licenseFormatForProjectFiles") {
     source = fileTree(project.projectDir) {
         include("**/*.kt", "**/*.kts")
         include("**/*.toml")

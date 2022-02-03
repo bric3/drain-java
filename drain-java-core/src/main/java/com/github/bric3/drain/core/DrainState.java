@@ -16,14 +16,14 @@ class DrainState {
     final double similarityThreshold;
     final int maxChildPerNode;
     final String delimiters;
-    final List<LogCluster> clusters;
+    final List<InternalLogCluster> clusters;
     final Node prefixTree;
 
     DrainState(int depth,
                double similarityThreshold,
                int maxChildPerNode,
                String delimiters,
-               List<LogCluster> clusters,
+               List<InternalLogCluster> clusters,
                Node prefixTree) {
         this.depth = depth;
         this.similarityThreshold = similarityThreshold;

@@ -15,14 +15,14 @@ public class FromLine {
     public boolean fromStart = false;
     public long number = 10;
 
-    static FromLine fromStart(long lineNumber) {
+    public static FromLine fromStart(long lineNumber) {
         var startFromLine = new FromLine();
         startFromLine.fromStart = true;
         startFromLine.number = lineNumber;
         return startFromLine;
     }
 
-    static FromLine fromEnd(long lineNumber) {
+    public static FromLine fromEnd(long lineNumber) {
         var startFromLine = new FromLine();
         startFromLine.fromStart = false;
         startFromLine.number = lineNumber;

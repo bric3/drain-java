@@ -234,7 +234,7 @@ public class MappedFileLineReader implements Closeable {
     }
 
 
-    interface IOReadAction {
+    public interface IOReadAction {
         IOReadAction NO_OP = (c, s) -> 0;
 
         long apply(FileChannel fileChannel, long startPosition) throws IOException;

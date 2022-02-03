@@ -78,7 +78,7 @@ public class Drain {
     /**
      * All log clusters.
      */
-    private final List<LogCluster> clusters;
+    private final List<InternalLogCluster> clusters;
 
     private final Node root;
 
@@ -119,7 +119,7 @@ public class Drain {
 
         if (matchCluster == null) {
             // create cluster if it doesn't exists, using log content tokens as template tokens
-            matchCluster = new LogCluster(contentTokens);
+            matchCluster = new InternalLogCluster(contentTokens);
             clusters.add(matchCluster);
             addLogClusterToPrefixTree(matchCluster);
         } else {
@@ -129,7 +129,7 @@ public class Drain {
     }
 
     private @Nullable
-    LogCluster treeSearch(@Nonnull List<String> logTokens) {
+    InternalLogCluster treeSearch(@Nonnull List<String> logTokens) {
 
         // at first level, children are grouped by token (word) count
         var tokensCount = logTokens.size();
@@ -174,15 +174,15 @@ public class Drain {
     }
 
     private @Nullable
-    LogCluster fastMatch(@Nonnull List<LogCluster> clusters,
-                         @Nonnull List<String> logTokens) {
-        LogCluster matchedCluster = null;
+    InternalLogCluster fastMatch(@Nonnull List<InternalLogCluster> clusters,
+                                 @Nonnull List<String> logTokens) {
+        InternalLogCluster matchedCluster = null;
 
         double maxSimilarity = -1;
         int maxParamCount = -1;
-        LogCluster maxCluster = null;
+        InternalLogCluster maxCluster = null;
 
-        for (LogCluster cluster : clusters) {
+        for (InternalLogCluster cluster : clusters) {
             var seqDistance = computeSeqDistance(cluster.internalTokens(), logTokens);
             if (seqDistance.similarity > maxSimilarity
                 || (seqDistance.similarity == maxSimilarity
@@ -236,7 +236,7 @@ public class Drain {
         return new SeqDistance(similarity, paramCount);
     }
 
-    private void addLogClusterToPrefixTree(@Nonnull LogCluster newLogCluster) {
+    private void addLogClusterToPrefixTree(@Nonnull InternalLogCluster newLogCluster) {
         int tokensCount = newLogCluster.internalTokens().size();
 
         var node = this.root.getOrCreateChild(tokensCount);

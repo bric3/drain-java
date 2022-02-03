@@ -7,14 +7,13 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-package com.github.bric3.drain;
+package com.github.bric3.tailer.file;
 
-import com.github.bric3.tailer.FromLine;
-import com.github.bric3.tailer.MappedFileLineReader;
-import com.github.bric3.tailer.MappedFileLineReader.ChannelSink;
-import com.github.bric3.tailer.MappedFileLineReader.IOReadAction;
-import com.github.bric3.tailer.MappedFileLineReader.LineConsumer;
 import com.github.bric3.tailer.config.Config;
+import com.github.bric3.tailer.config.FromLine;
+import com.github.bric3.tailer.file.MappedFileLineReader.ChannelSink;
+import com.github.bric3.tailer.file.MappedFileLineReader.IOReadAction;
+import com.github.bric3.tailer.file.MappedFileLineReader.LineConsumer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -150,6 +149,7 @@ class MappedFileLineReaderTest {
             }
         }
     }
+
     private static class TestSink implements WritableByteChannel {
 
         int writenBytes = 0;
