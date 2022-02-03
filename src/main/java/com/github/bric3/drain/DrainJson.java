@@ -14,8 +14,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Splitter;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -156,7 +154,7 @@ public class DrainJson {
      */
     public LogCluster findLogMessage(@Nonnull String message) {
         // sprint message by delimiter / whitespaces
-        var contentTokens = tokenize(message);
+        var contentTokens = Tokenizer.tokenize(message, delimiters);
 
         // Search the prefix tree
         var matchCluster = treeSearch(contentTokens);
@@ -175,7 +173,7 @@ public class DrainJson {
      */
     public LogCluster parseLogMessage(@Nonnull String message) {
         // sprint message by delimiter / whitespaces
-        var contentTokens = tokenize(message);
+        var contentTokens = Tokenizer.tokenize(message, delimiters);
 
         // Search the prefix tree
         var matchCluster = treeSearch(contentTokens);
@@ -192,13 +190,6 @@ public class DrainJson {
         //System.out.println("Found node: "+matchCluster);
 
         return matchCluster;
-    }
-
-    private List<String> tokenize(String content) {
-        return Splitter.on(CharMatcher.anyOf(delimiters))
-                            .trimResults()
-                            .omitEmptyStrings()
-                            .splitToList(content);
     }
 
     private @Nullable

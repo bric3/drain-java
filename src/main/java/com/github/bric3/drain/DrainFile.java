@@ -10,7 +10,6 @@
 package com.github.bric3.drain;
 
 import com.github.bric3.drain.MappedFileLineReader.LineConsumer;
-import com.google.common.base.Stopwatch;
 
 import java.nio.file.Path;
 import java.util.Comparator;

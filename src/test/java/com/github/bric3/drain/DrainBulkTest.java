@@ -9,7 +9,6 @@
  */
 package com.github.bric3.drain;
 
-import com.google.common.base.Stopwatch;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

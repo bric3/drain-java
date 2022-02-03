@@ -13,7 +13,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
  * Drain log pattern miner.
@@ -111,7 +110,7 @@ public class Drain {
      */
     public void parseLogMessage(@Nonnull String message) {
         // sprint message by delimiter / whitespaces
-        var contentTokens = tokenize(message);
+        var contentTokens = Tokenizer.tokenize(message, delimiters);
 
         // Search the prefix tree
         var matchCluster = treeSearch(contentTokens);
@@ -125,20 +124,6 @@ public class Drain {
             // add the log to an existing cluster
             matchCluster.newSighting(contentTokens);
         }
-    }
-
-    private List<String> tokenize(String content) {
-        var stringTokenizer = new StringTokenizer(content, delimiters);
-
-        var tokens = new ArrayList<String>(stringTokenizer.countTokens());
-        while (stringTokenizer.hasMoreTokens()) {
-            var trimmedToken = stringTokenizer.nextToken();
-            if (!trimmedToken.isBlank()) {
-                tokens.add(trimmedToken.trim());
-            }
-        }
-
-        return tokens;
     }
 
     private @Nullable
