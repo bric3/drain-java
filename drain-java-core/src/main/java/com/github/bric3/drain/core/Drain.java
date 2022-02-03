@@ -14,6 +14,7 @@ import com.github.bric3.drain.utils.Tokenizer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -112,10 +113,10 @@ public class Drain {
      */
     public void parseLogMessage(@Nonnull String message) {
         // sprint message by delimiter / whitespaces
-        var contentTokens = Tokenizer.tokenize(message, delimiters);
+        List<String> contentTokens = Tokenizer.tokenize(message, delimiters);
 
         // Search the prefix tree
-        var matchCluster = treeSearch(contentTokens);
+        InternalLogCluster matchCluster = treeSearch(contentTokens);
 
         if (matchCluster == null) {
             // create cluster if it doesn't exists, using log content tokens as template tokens
@@ -132,8 +133,8 @@ public class Drain {
     InternalLogCluster treeSearch(@Nonnull List<String> logTokens) {
 
         // at first level, children are grouped by token (word) count
-        var tokensCount = logTokens.size();
-        var node = this.root.get(tokensCount);
+        int tokensCount = logTokens.size();
+        Node node = this.root.get(tokensCount);
 
         // the prefix tree is empty
         if (node == null) {
@@ -157,7 +158,7 @@ public class Drain {
             }
 
             // descend
-            var nextNode = node.get(token);
+            Node nextNode = node.get(token);
             // if null try get from generic pattern
             if (nextNode == null) {
                 nextNode = node.get(PARAM_MARKER);
@@ -183,7 +184,7 @@ public class Drain {
         InternalLogCluster maxCluster = null;
 
         for (InternalLogCluster cluster : clusters) {
-            var seqDistance = computeSeqDistance(cluster.internalTokens(), logTokens);
+            SeqDistance seqDistance = computeSeqDistance(cluster.internalTokens(), logTokens);
             if (seqDistance.similarity > maxSimilarity
                 || (seqDistance.similarity == maxSimilarity
                     && seqDistance.paramCount > maxParamCount)) {
@@ -239,7 +240,7 @@ public class Drain {
     private void addLogClusterToPrefixTree(@Nonnull InternalLogCluster newLogCluster) {
         int tokensCount = newLogCluster.internalTokens().size();
 
-        var node = this.root.getOrCreateChild(tokensCount);
+        Node node = this.root.getOrCreateChild(tokensCount);
 
         // handle case of empty log message
         if (tokensCount == 0) {
@@ -303,7 +304,7 @@ public class Drain {
      * @return Non modifiable list of current clusters.
      */
     public List<LogCluster> clusters() {
-        return List.copyOf(clusters);
+        return Collections.unmodifiableList(new ArrayList<>(clusters));
     }
 
     Node prefixTree() {

@@ -27,14 +27,14 @@ class DrainBulkTest {
 
     @Test
     void smokeTest() throws IOException {
-        var drain = Drain.drainBuilder()
-                         .additionalDelimiters("_")
-                         .depth(4)
-                         .build();
+        Drain drain = Drain.drainBuilder()
+                           .additionalDelimiters("_")
+                           .depth(4)
+                           .build();
 
-        var lineCounter = new AtomicInteger();
+        AtomicInteger lineCounter = new AtomicInteger();
 
-        var stopwatch = Stopwatch.createStarted();
+        Stopwatch stopwatch = Stopwatch.createStarted();
         Files.lines(TestPaths.get("SSH.log"),
                     StandardCharsets.UTF_8)
              .peek(__ -> lineCounter.incrementAndGet())
@@ -54,10 +54,10 @@ class DrainBulkTest {
 
         assertThat(drain.clusters()).hasSize(51);
 
-        var sortedClusters = drain.clusters()
-                                  .stream()
-                                  .sorted(Comparator.comparing(LogCluster::sightings).reversed())
-                                  .collect(Collectors.toList());
+        List<LogCluster> sortedClusters = drain.clusters()
+                                               .stream()
+                                               .sorted(Comparator.comparing(LogCluster::sightings).reversed())
+                                               .collect(Collectors.toList());
 
 //        sortedClusters.forEach(System.out::println);
 

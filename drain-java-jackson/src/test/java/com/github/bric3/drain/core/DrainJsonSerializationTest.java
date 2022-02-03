@@ -41,10 +41,10 @@ class DrainJsonSerializationTest {
 
     @Test
     void serde2_should_result_in_same_state() {
-        var drain = Drain.drainBuilder()
-                         .additionalDelimiters("_")
-                         .depth(4)
-                         .build();
+        Drain drain = Drain.drainBuilder()
+                           .additionalDelimiters("_")
+                           .depth(4)
+                           .build();
 
         Stream.of("sent 550 bytes",
                   "sent 110 bytes",
@@ -68,7 +68,7 @@ class DrainJsonSerializationTest {
 
     @Test
     void drain_with_reloaded_state_can_resume_log_mining() throws IOException {
-        var drain = initDrain("Unity.log", l -> l.substring(l.indexOf(": ") + 2));
+        Drain drain = initDrain("Unity.log", l -> l.substring(l.indexOf(": ") + 2));
 
         Drain drainReloaded = serde(drain);
         assertThat(drainReloaded.clusters()).isEqualTo(drain.clusters());
@@ -88,10 +88,10 @@ class DrainJsonSerializationTest {
     }
 
     private Drain initDrain(String logFile, Function<String, String> normalizingFunction) throws IOException {
-        var drain = Drain.drainBuilder()
-                         .additionalDelimiters("_")
-                         .depth(4)
-                         .build();
+        Drain drain = Drain.drainBuilder()
+                           .additionalDelimiters("_")
+                           .depth(4)
+                           .build();
 
         Files.lines(TestPaths.get(logFile), UTF_8)
              .map(normalizingFunction)
@@ -100,8 +100,8 @@ class DrainJsonSerializationTest {
     }
 
     private Drain serde(Drain drain) {
-        final var serde = new DrainJsonSerialization();
-        final var writer = new StringWriter();
+        final DrainJsonSerialization serde = new DrainJsonSerialization();
+        final StringWriter writer = new StringWriter();
         serde.saveState(drain, writer);
 
         return serde.loadState(new StringReader(writer.toString()));

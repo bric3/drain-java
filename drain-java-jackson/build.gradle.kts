@@ -26,15 +26,9 @@ dependencies {
     testRuntimeOnly(libs.junit.jupiter.engine)
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
-    }
-}
-
 tasks {
     withType(JavaCompile::class) {
-        options.release.set(11)
+        options.release.set(8)
     }
 
     test {
@@ -47,7 +41,5 @@ tasks {
 
     processTestResources {
         dependsOn(rootProject.tasks.getByPath("unpackFile"))
-//        dependsOn(rootProject.tasks.getByPath("downloadFile"))
-//        from(tarTree(File(buildDir, "SSH.tar.gz")))
     }
 }

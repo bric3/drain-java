@@ -63,7 +63,7 @@ class Node {
     }
 
     Map<Object, Node> childMappings() {
-        return Map.copyOf(keyToChildNode);
+        return Collections.unmodifiableMap(new HashMap<>(keyToChildNode));
     }
 
     @Override

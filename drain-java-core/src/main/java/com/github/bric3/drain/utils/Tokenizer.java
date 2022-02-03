@@ -15,13 +15,13 @@ import java.util.StringTokenizer;
 
 public class Tokenizer {
     public static List<String> tokenize(String content, String delimiters) {
-        var stringTokenizer = new StringTokenizer(content, delimiters);
+        StringTokenizer stringTokenizer = new StringTokenizer(content, delimiters);
 
-        var tokens = new ArrayList<String>(stringTokenizer.countTokens());
+        List<String> tokens = new ArrayList<>(stringTokenizer.countTokens());
         while (stringTokenizer.hasMoreTokens()) {
-            var trimmedToken = stringTokenizer.nextToken();
-            if (!trimmedToken.isBlank()) {
-                tokens.add(trimmedToken.trim());
+            String trimmedToken = stringTokenizer.nextToken().trim();
+            if (!trimmedToken.isEmpty()) {
+                tokens.add(trimmedToken);
             }
         }
 

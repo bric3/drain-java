@@ -11,23 +11,24 @@ package com.github.bric3.drain.utils;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class TestPaths {
     public static Path get(String first, String... more) {
-        var subPath = Path.of(first, more);
-        var resolved = Path.of("build/resources/test").resolve(subPath);
+        Path subPath = Paths.get(first, more);
+        Path resolved = Paths.get("build/resources/test").resolve(subPath);
         if (Files.exists(resolved)) {
             return resolved;
         }
-        resolved = Path.of("..").resolve(resolved);
+        resolved = Paths.get("..").resolve(resolved);
         if (Files.exists(resolved)) {
             return resolved;
         }
-        resolved = Path.of("build").resolve(subPath);
+        resolved = Paths.get("build").resolve(subPath);
         if (Files.exists(resolved)) {
             return resolved;
         }
-        resolved = Path.of("..").resolve(resolved);
+        resolved = Paths.get("..").resolve(resolved);
         if (Files.exists(resolved)) {
             return resolved;
         }
