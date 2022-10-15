@@ -36,7 +36,7 @@ junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", vers
 jackson = ["jackson-core", "jackson-annotations", "jackson-databind"]
 
 [plugins]
-download = { id = "de.undercouch.download", version = "5.2.1" }
+download = { id = "de.undercouch.download", version = "5.3.0" }
 shadow = { id = "com.github.johnrengelman.shadow", version = "7.1.2" }
 versions = { id = "com.github.ben-manes.versions", version = "0.42.0" }
 license = { id = "com.github.hierynomus.license", version = "0.16.1" }
