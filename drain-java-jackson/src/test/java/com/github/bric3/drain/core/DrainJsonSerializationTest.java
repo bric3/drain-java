@@ -93,9 +93,10 @@ class DrainJsonSerializationTest {
                            .depth(4)
                            .build();
 
-        Files.lines(TestPaths.get(logFile), UTF_8)
-             .map(normalizingFunction)
-             .forEach(drain::parseLogMessage);
+        try (Stream<String> lines = Files.lines(TestPaths.get(logFile), UTF_8)) {
+            lines.map(normalizingFunction)
+                 .forEach(drain::parseLogMessage);
+        }
         return drain;
     }
 
