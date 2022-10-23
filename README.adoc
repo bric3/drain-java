@@ -1,6 +1,6 @@
 = drain java
 
-image:https://github.com/bric3/drain-java/workflows/Build/badge.svg[]
+image:https://github.com/bric3/drain-java/actions/workflows/gradle.yml/badge.svg[Java CI with Gradle,link=https://github.com/bric3/drain-java/actions/workflows/gradle.yml]
 
 == Introduction
 
@@ -24,11 +24,11 @@ Since this tool is not yet released the tool needs to be built locally.
 Also, the built jar is not yet super user-friendly. Since it's not a finished
 product, anything could change.
 
-.example usage
+.Example usage
 [source, shell]
 ----
 $ ./gradlew build
-$ java -jar build/libs/drain-java-1.0-SNAPSHOT-all.jar -h
+$ java -jar tailer/build/libs/tailer-0.1.0-SNAPSHOT-all.jar -h
 
 tail - drain
 Usage: tail [-dfhV] [--verbose] [-n=NUM]
@@ -49,11 +49,11 @@ Usage: tail [-dfhV] [--verbose] [-n=NUM]
                       COLUMN
   -V, --version     Print version information and exit.
       --verbose     Verbose output, mostly for DRAIN or errors
-$ java -jar build/libs/drain-java-1.0-SNAPSHOT-all.jar --version
+$ java -jar tailer/build/libs/tailer-0.1.0-SNAPSHOT-all.jar --version
 Versioned Command 1.0
-Picocli 4.6.1
-JVM: 11.0.9 (Amazon.com Inc. OpenJDK 64-Bit Server VM 11.0.9+11-LTS)
-OS: Mac OS X 10.16 x86_64
+Picocli 4.6.3
+JVM: 19 (Amazon.com Inc. OpenJDK 64-Bit Server VM 19+36-FR)
+OS: Mac OS X 12.6 x86_64
 ----
 
 By default, the tool act similarly to `tail`, and it will output the file to the stdout.
