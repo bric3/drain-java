@@ -19,7 +19,6 @@ repositories {
 
 dependencies {
     implementation(libs.jsr305)
-    implementation(libs.bundles.jackson)
 
     testImplementation(libs.assertj.core)
     testImplementation(libs.junit.jupiter.api)

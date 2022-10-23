@@ -33,8 +33,6 @@ tasks.register<Copy>("unpackFile") {
     into(buildDir)
 }
 
-
-
 license {
     ext["year"] = "2021, Today"
     ext["name"] = "Brice Dutheil"
