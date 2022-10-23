@@ -1,3 +1,5 @@
+import nebula.plugin.release.git.opinion.Strategies
+
 /*
  * drain-java
  *
@@ -22,6 +24,9 @@ repositories {
     mavenCentral()
 }
 
+release {
+    defaultVersionStrategy = Strategies.getSNAPSHOT()
+}
 
 val gradleExtensionsId = libs.plugins.gradle.extensions.get().pluginId
 allprojects {
@@ -46,14 +51,16 @@ allprojects {
         }
     }
 
+
+    // Releasing testable with
+    //  CI=true ORG_GRADLE_PROJECT_ossrhUsername=bric3 ORG_GRADLE_PROJECT_ossrhPassword=$(echo bad) ORG_GRADLE_PROJECT_signingKey=$(cat secring.gpg) ORG_GRADLE_PROJECT_signingPassword=$(cat passphrase) ./gradlew snapshot --console=verbose
     plugins.withId("maven-publish") {
         plugins.apply("signing")
-//        rootProject.tasks.release {
-//            dependsOn("publish")
-//        }
+        rootProject.tasks.release {
+            dependsOn(tasks.named("publish"))
+        }
 
         configure<PublishingExtension> {
-
             publications {
                 register<MavenPublication>("maven") {
                     plugins.withId("java-platform") {
@@ -103,7 +110,7 @@ allprojects {
 
                 maven {
                     if (properties("publish.central").toBoolean()) {
-                        val isGithubRelease = providers.environmentVariable("GITHUB_EVENT_NAME").get().equals("release", true)
+                        val isGithubRelease = providers.environmentVariable("GITHUB_EVENT_NAME").orNull.equals("release", true)
                         name = "central"
                         url = uri(when {
                             isGithubRelease && !isSnapshot(project.version) -> "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
