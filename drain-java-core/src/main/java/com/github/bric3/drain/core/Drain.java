@@ -45,6 +45,10 @@ import java.util.List;
  * </code></pre>
  * </p>
  *
+ * <p>
+ *     Note this implementation is not thread safe.
+ * </p>
+ *
  * @author brice.dutheil@gmail.com
  * @modifiedBy david.ohana@ibm.com, moshikh@il.ibm.com
  * @originalAuthor LogPAI team
@@ -133,6 +137,22 @@ public class Drain {
             matchCluster.newSighting(contentTokens);
         }
     }
+
+    /**
+     * Search a matching log cluster given a log message.
+     *
+     * @param message The log message content
+     * @return The matching log cluster or null if no match
+     */
+    public LogCluster searchLogMessage(@Nonnull String message) {
+        // sprint message by delimiter / whitespaces
+        List<String> contentTokens = Tokenizer.tokenize(message, delimiters);
+
+        // Search the prefix tree
+        LogCluster matchCluster = treeSearch(contentTokens);
+        return matchCluster;
+    }
+
 
     private @Nullable
     InternalLogCluster treeSearch(@Nonnull List<String> logTokens) {

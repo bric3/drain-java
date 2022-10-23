@@ -20,6 +20,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,16 +36,16 @@ class DrainBulkTest {
         AtomicInteger lineCounter = new AtomicInteger();
 
         Stopwatch stopwatch = Stopwatch.createStarted();
-        Files.lines(TestPaths.get("SSH.log"),
-                    StandardCharsets.UTF_8)
-             .peek(__ -> lineCounter.incrementAndGet())
-             .map(l -> l.substring(l.indexOf("]: ") + 3)) // removes this part: "Dec 10 06:55:46 LabSZ sshd[24200]: "
-             .forEach(content -> {
-                 drain.parseLogMessage(content);
-                 if (lineCounter.get() % 10000 == 0) {
-                     System.out.printf("%4d clusters so far%n", drain.clusters().size());
-                 }
-             });
+        try (Stream<String> lines = Files.lines(TestPaths.get("SSH.log"), StandardCharsets.UTF_8)) {
+            lines.peek(__ -> lineCounter.incrementAndGet())
+                 .map(l -> l.substring(l.indexOf("]: ") + 3)) // removes this part: "Dec 10 06:55:46 LabSZ sshd[24200]: "
+                 .forEach(content -> {
+                     drain.parseLogMessage(content);
+                     if (lineCounter.get() % 10000 == 0) {
+                         System.out.printf("%4d clusters so far%n", drain.clusters().size());
+                     }
+                 });
+        }
 
 
         System.out.printf("---- Done processing file. Total of %d lines, done in %s, %d clusters%n",
@@ -115,9 +116,29 @@ class DrainBulkTest {
         assertCluster(sortedClusters, 50, 1, "syslogin perform logout: logout() returned an error");
     }
 
-    private void assertCluster(List<LogCluster> sortedClusters, int i, int sigthings, String tokens) {
-        assertThat(sortedClusters.get(i).sightings()).isEqualTo(sigthings);
-        assertThat(String.join(" ", sortedClusters.get(i).tokens())).isEqualTo(tokens);
+    @Test
+    void can_find_a_log() throws IOException {
+        Drain drain = Drain.drainBuilder()
+                           .additionalDelimiters("_")
+                           .depth(4)
+                           .build();
+
+        try (Stream<String> lines = Files.lines(TestPaths.get("SSH.log"), StandardCharsets.UTF_8)) {
+            lines.map(l -> l.substring(l.indexOf("]: ") + 3)) // removes this part: "Dec 10 06:55:46 LabSZ sshd[24200]: "
+                 .forEach(drain::parseLogMessage);
+        }
+
+        LogCluster logCluster = drain.searchLogMessage("Received disconnect from 202.100.179.208: 11: Bye Bye [preauth]");
+        assertCluster(logCluster, 46642, "Received disconnect from <*> 11: <*> <*> <*>");
+    }
+
+    private void assertCluster(List<LogCluster> sortedClusters, int i, int sightings, String tokens) {
+        assertCluster(sortedClusters.get(i), sightings, tokens);
+    }
+
+    private static void assertCluster(LogCluster logCluster, int sightings, String tokens) {
+        assertThat(logCluster.sightings()).isEqualTo(sightings);
+        assertThat(String.join(" ", logCluster.tokens())).isEqualTo(tokens);
     }
 }
 /*
