@@ -10,6 +10,7 @@
 
 plugins {
     `java-library`
+    alias(libs.plugins.gradle.extensions)
 }
 
 repositories {

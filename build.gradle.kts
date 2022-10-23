@@ -12,6 +12,8 @@ plugins {
     alias(libs.plugins.versions)
     alias(libs.plugins.license)
     alias(libs.plugins.download)
+    alias(libs.plugins.gradle.extensions)
+    
 }
 
 repositories {
