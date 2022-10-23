@@ -19,26 +19,31 @@ import java.util.List;
 
 /**
  * Drain log pattern miner.
- *
+ * <p>
  * This code comes from a modified work of the LogPai team by IBM engineers,
  * but it has been improved to fit the Java platform.
- *
+ * </p>
+ * <p>
  * Use the builder method {@link #drainBuilder()} to configure an
  * instance.
+ * </p>
  *
+ * <p>
  * Example use:
  * <pre><code>
  * var drain = Drain.drainBuilder()
  *                  .additionalDelimiters("_")
  *                  .depth(4)
- *                  .build()
- * Files.lines(Paths.get("build/resources/test/SSH.log"),
- *             StandardCharsets.UTF_8)
- *      .forEach(drain::parseLogMessage);
+ *                  .build();
+ * Files.lines(
+ *     Paths.get("file.log"),
+ *     StandardCharsets.UTF_8
+ * ).forEach(drain::parseLogMessage);
  *
  * // do something with clusters
  * drain.clusters();
  * </code></pre>
+ * </p>
  *
  * @author brice.dutheil@gmail.com
  * @modifiedBy david.ohana@ibm.com, moshikh@il.ibm.com
