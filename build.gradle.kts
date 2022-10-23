@@ -1,3 +1,5 @@
+import org.gradle.model.internal.core.ModelNodes.withType
+
 /*
  * drain-java
  *
@@ -13,26 +15,51 @@ plugins {
     alias(libs.plugins.license)
     alias(libs.plugins.download)
     alias(libs.plugins.gradle.extensions)
-    
+    id("nebula.release") version "17.0.1"
+
 }
 
 repositories {
     mavenCentral()
 }
 
-group = "com.github.bric3.drain"
-version = "1.0-SNAPSHOT"
 
-tasks.register<de.undercouch.gradle.tasks.download.Download>("downloadFile") {
-    src("https://zenodo.org/record/3227177/files/SSH.tar.gz")
-    dest(File(buildDir, "SSH.tar.gz"))
-    onlyIfModified(true)
+val gradleExtensionsId = libs.plugins.gradle.extensions.get().pluginId
+allprojects {
+    plugins.apply(gradleExtensionsId)
+    group = "com.github.bric3.drain"
+
+    repositories {
+        mavenCentral()
+    }
+
+    plugins.withId("java-library") {
+        configure<JavaPluginExtension> {
+
+            withJavadocJar()
+            withSourcesJar()
+        }
+
+        tasks {
+            withType(JavaCompile::class) {
+                options.release.set(8)
+            }
+        }
+    }
 }
 
-tasks.register<Copy>("unpackFile") {
-    dependsOn("downloadFile")
-    from(tarTree(File(buildDir, "SSH.tar.gz")))
-    into(buildDir)
+tasks {
+    register<de.undercouch.gradle.tasks.download.Download>("downloadFile") {
+        src("https://zenodo.org/record/3227177/files/SSH.tar.gz")
+        dest(File(buildDir, "SSH.tar.gz"))
+        onlyIfModified(true)
+    }
+
+    register<Copy>("unpackFile") {
+        dependsOn("downloadFile")
+        from(tarTree(File(buildDir, "SSH.tar.gz")))
+        into(buildDir)
+    }
 }
 
 license {
@@ -61,19 +88,21 @@ license {
             )
     )
 }
-tasks.register<com.hierynomus.gradle.license.tasks.LicenseCheck>("licenseCheckForProjectFiles") {
-    source = fileTree(project.projectDir) {
-        include("**/*.kt", "**/*.kts")
-        include("**/*.toml")
-        exclude("**/buildSrc/build/generated-sources/**")
+tasks {
+    register<com.hierynomus.gradle.license.tasks.LicenseCheck>("licenseCheckForProjectFiles") {
+        source = fileTree(project.projectDir) {
+            include("**/*.kt", "**/*.kts")
+            include("**/*.toml")
+            exclude("**/buildSrc/build/generated-sources/**")
+        }
     }
-}
-tasks["license"].dependsOn("licenseCheckForProjectFiles")
-tasks.register<com.hierynomus.gradle.license.tasks.LicenseFormat>("licenseFormatForProjectFiles") {
-    source = fileTree(project.projectDir) {
-        include("**/*.kt", "**/*.kts")
-        include("**/*.toml")
-        exclude("**/buildSrc/build/generated-sources/**")
+    named("license") { dependsOn("licenseCheckForProjectFiles") }
+    register<com.hierynomus.gradle.license.tasks.LicenseFormat>("licenseFormatForProjectFiles") {
+        source = fileTree(project.projectDir) {
+            include("**/*.kt", "**/*.kts")
+            include("**/*.toml")
+            exclude("**/buildSrc/build/generated-sources/**")
+        }
     }
+    named("licenseFormat") { dependsOn("licenseFormatForProjectFiles") }
 }
-tasks["licenseFormat"].dependsOn("licenseFormatForProjectFiles")

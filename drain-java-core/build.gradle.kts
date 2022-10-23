@@ -10,11 +10,6 @@
 
 plugins {
     `java-library`
-    alias(libs.plugins.download)
-}
-
-repositories {
-    mavenCentral()
 }
 
 dependencies {
@@ -26,10 +21,6 @@ dependencies {
 }
 
 tasks {
-    withType(JavaCompile::class) {
-        options.release.set(8)
-    }
-
     processTestResources {
         dependsOn(rootProject.tasks.getByPath("unpackFile"))
     }

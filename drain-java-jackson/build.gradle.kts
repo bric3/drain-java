@@ -10,11 +10,6 @@
 
 plugins {
     `java-library`
-    alias(libs.plugins.gradle.extensions)
-}
-
-repositories {
-    mavenCentral()
 }
 
 dependencies {
@@ -28,8 +23,8 @@ dependencies {
 }
 
 tasks {
-    withType(JavaCompile::class) {
-        options.release.set(8)
+    processTestResources {
+        dependsOn(rootProject.tasks.getByPath("unpackFile"))
     }
 
     test {
@@ -38,9 +33,5 @@ tasks {
             junitXml.required.set(true)
             html.required.set(true)
         }
-    }
-
-    processTestResources {
-        dependsOn(rootProject.tasks.getByPath("unpackFile"))
     }
 }
