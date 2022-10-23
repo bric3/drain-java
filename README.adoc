@@ -18,6 +18,21 @@ In avoiding deep trees this also helps to keep it balance.
 
 First, https://foojay.io/almanac/jdk-11/[Java 11] is required to run drain-java.
 
+=== As a dependency
+
+You can consume drain-java as a dependency in your project `io.github.bric3.drain:drain-java-core`,
+currently only https://s01.oss.sonatype.org/content/repositories/snapshots/io/github/bric3/drain/[snapshots]
+are available by adding this repository.
+
+[source, kotlin]
+----
+repositories {
+    maven {
+        url("https://oss.sonatype.org/content/repositories/snapshots/")
+    }
+}
+----
+
 === From command line
 
 Since this tool is not yet released the tool needs to be built locally.
