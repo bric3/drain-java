@@ -28,7 +28,12 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Simple Drain state serialization mechanism.
+ * Simple and Drain state serialization mechanism.
+ *
+ * <strong>DISCLAIMER</strong> This tool allows to (de)serialize the Drain state.
+ * But it requires to be in the same package as the Drain class.
+ * This is not good solution so be advised that the qualified name of this API
+ * might to change.
  *
  * Example use:
  * <pre><code>
