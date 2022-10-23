@@ -10,11 +10,10 @@
 
 plugins {
     `java-library`
+    `maven-publish`
 }
 
-repositories {
-    mavenCentral()
-}
+description = "Drain Java Jackson Serialization"
 
 dependencies {
     implementation(projects.drainJavaCore)
@@ -27,8 +26,8 @@ dependencies {
 }
 
 tasks {
-    withType(JavaCompile::class) {
-        options.release.set(8)
+    processTestResources {
+        dependsOn(rootProject.tasks.getByPath("unpackFile"))
     }
 
     test {
@@ -37,9 +36,5 @@ tasks {
             junitXml.required.set(true)
             html.required.set(true)
         }
-    }
-
-    processTestResources {
-        dependsOn(rootProject.tasks.getByPath("unpackFile"))
     }
 }

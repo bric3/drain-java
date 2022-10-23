@@ -13,9 +13,7 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
-repositories {
-    mavenCentral()
-}
+description = "Tail application based on drain-java"
 
 dependencies {
     implementation(projects.drainJavaCore)
@@ -31,12 +29,14 @@ dependencies {
 }
 
 application {
-    mainClass.set("com.github.bric3.drain.TailerMain")
+    mainClass.set("io.github.bric3.tailer.TailerMain")
 }
+
+val JAVA_VERSION = 19
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(JAVA_VERSION))
     }
 }
 
@@ -46,7 +46,7 @@ tasks {
     }
 
     withType(JavaCompile::class) {
-        options.release.set(11)
+        options.release.set(JAVA_VERSION)
     }
 
     test {

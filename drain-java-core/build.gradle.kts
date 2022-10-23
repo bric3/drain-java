@@ -10,12 +10,10 @@
 
 plugins {
     `java-library`
-    alias(libs.plugins.download)
+    `maven-publish`
 }
 
-repositories {
-    mavenCentral()
-}
+description = "Drain Java Implementation"
 
 dependencies {
     implementation(libs.jsr305)
@@ -26,10 +24,6 @@ dependencies {
 }
 
 tasks {
-    withType(JavaCompile::class) {
-        options.release.set(8)
-    }
-
     processTestResources {
         dependsOn(rootProject.tasks.getByPath("unpackFile"))
     }

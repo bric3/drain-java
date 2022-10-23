@@ -11,5 +11,10 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "drain-java"
 
-include("drain-java-core", "drain-java-jackson", "tailer")
+include(
+    "drain-java-bom",
+    "drain-java-core",
+    "drain-java-jackson",
+    "tailer"
+)
 
