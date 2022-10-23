@@ -56,6 +56,9 @@ allprojects {
 
             publications {
                 register<MavenPublication>("maven") {
+                    plugins.withId("java-platform") {
+                        from(components["javaPlatform"])
+                    }
                     plugins.withId("java-library") {
                         from(components["java"])
                     }
