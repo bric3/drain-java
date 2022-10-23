@@ -11,7 +11,7 @@ package com.github.bric3.tailer.drain;
 
 import com.github.bric3.drain.core.Drain;
 import com.github.bric3.drain.core.LogCluster;
-import com.github.bric3.drain.utils.Stopwatch;
+import com.github.bric3.drain.internal.Stopwatch;
 import com.github.bric3.tailer.config.Config;
 import com.github.bric3.tailer.config.FromLine;
 import com.github.bric3.tailer.file.MappedFileLineReader;

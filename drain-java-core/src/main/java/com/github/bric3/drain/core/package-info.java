@@ -13,11 +13,10 @@
  * <p>
  * This code comes from a modified work of the LogPai team by IBM engineers,
  * but it has been improved to fit the Java platform.
- * </p>
+ *
  * <p>
  * Use the builder method {@link com.github.bric3.drain.core.Drain#drainBuilder()} to configure an
  * instance.
- * </p>
  *
  * <p>
  * Example use:
@@ -34,6 +33,5 @@
  * // do something with clusters
  * drain.clusters();
  * </code></pre>
- * </p>
  */
 package com.github.bric3.drain.core;

@@ -9,7 +9,7 @@
  */
 package com.github.bric3.drain.core;
 
-import com.github.bric3.drain.utils.Stopwatch;
+import com.github.bric3.drain.internal.Stopwatch;
 import com.github.bric3.drain.utils.TestPaths;
 import org.junit.jupiter.api.Test;
 

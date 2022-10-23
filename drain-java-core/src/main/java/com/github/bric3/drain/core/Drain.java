@@ -9,7 +9,7 @@
  */
 package com.github.bric3.drain.core;
 
-import com.github.bric3.drain.utils.Tokenizer;
+import com.github.bric3.drain.internal.Tokenizer;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -43,11 +43,9 @@ import java.util.List;
  * // do something with clusters
  * drain.clusters();
  * </code></pre>
- * </p>
  *
  * <p>
  *     Note this implementation is not thread safe.
- * </p>
  *
  * @author brice.dutheil@gmail.com
  * @modifiedBy david.ohana@ibm.com, moshikh@il.ibm.com
@@ -354,6 +352,9 @@ public class Drain {
         return new DrainBuilder();
     }
 
+    /**
+     * Builder for {@link Drain}
+     */
     public static class DrainBuilder {
         private int depth = 4;
         private String additionalDelimiters = "";

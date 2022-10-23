@@ -1,5 +1,3 @@
-import org.gradle.model.internal.core.ModelNodes.withType
-
 /*
  * drain-java
  *
@@ -9,6 +7,7 @@ import org.gradle.model.internal.core.ModelNodes.withType
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+fun properties(key: String, defaultValue: Any? = null) = (project.findProperty(key) ?: defaultValue).toString()
 
 plugins {
     alias(libs.plugins.versions)
@@ -46,9 +45,128 @@ allprojects {
             }
         }
     }
+
+    plugins.withId("maven-publish") {
+        plugins.apply("signing")
+//        rootProject.tasks.release {
+//            dependsOn("publish")
+//        }
+
+        configure<PublishingExtension> {
+
+            publications {
+                register<MavenPublication>("maven") {
+                    plugins.withId("java-library") {
+                        from(components["java"])
+                    }
+                    // OSSRH enforces the `-SNAPSHOT` suffix on snapshot repository
+                    // https://central.sonatype.org/faq/400-error/#question
+                    
+                    pom {
+                        afterEvaluate {
+                            pom.description.set(project.description)
+                        }
+                        name.set(project.name)
+                        url.set("https://github.com/bric3/drain-java")
+                        licenses {
+                            license {
+                                distribution.set("repo")
+                                name.set("Mozilla Public License 2.0")
+                                url.set("https://www.mozilla.org/en-US/MPL/2.0/")
+                            }
+                        }
+                        val gitRepo = "https://github.com/bric3/drain-java"
+                        scm {
+                            connection.set("scm:git:${gitRepo}.git")
+                            developerConnection.set("scm:git:${gitRepo}.git")
+                            url.set(gitRepo)
+                        }
+                        issueManagement {
+                            system.set("GitHub")
+                            url.set("${gitRepo}/issues")
+                        }
+                        developers {
+                            developer {
+                                id.set("bric3")
+                                name.set("Brice Dutheil")
+                                email.set("brice.dutheil@gmail.com")
+                            }
+                        }
+                    }
+                }
+            }
+            repositories {
+                fun isSnapshot(version: Any) = version.toString().endsWith("-SNAPSHOT") || version.toString().contains("-dev")
+
+                maven {
+                    if (properties("publish.central").toBoolean()) {
+                        val isGithubRelease = providers.environmentVariable("GITHUB_EVENT_NAME").get().equals("release", true)
+                        name = "central"
+                        url = uri(when {
+                            isGithubRelease && !isSnapshot(project.version) -> "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+                            else -> "https://s01.oss.sonatype.org/content/repositories/snapshots"
+                        })
+                        credentials {
+                            username = findProperty("ossrhUsername") as? String
+                            password = findProperty("ossrhPassword") as? String
+                        }
+                    } else {
+                        name = "build-dir"
+                        url = uri("${rootProject.buildDir}/publishing-repository")
+                    }
+                    project.extra["publishingRepositoryUrl"] = url
+                }
+            }
+        }
+
+        val licenseSpec = copySpec {
+            from("${project.rootDir}/LICENSE")
+        }
+
+        tasks {
+            withType(Jar::class) {
+                metaInf.with(licenseSpec)
+                manifest.attributes(
+                    "Implementation-Title" to project.name,
+                    "Implementation-Version" to project.version,
+                    "Automatic-Module-Name" to project.name.replace('-', '.'),
+                    "Created-By" to "${System.getProperty("java.version")} (${System.getProperty("java.specification.vendor")})",
+                )
+            }
+
+            withType(Javadoc::class) {
+                val options = options as StandardJavadocDocletOptions
+                options.addStringOption("Xdoclint:none", "-quiet")
+            }
+
+            withType<Sign>().configureEach {
+                onlyIf { System.getenv("CI") == "true" }
+            }
+
+            named("publish") {
+                doFirst {
+                    logger.lifecycle("Uploading '${project.name}:${project.version}' to ${project.extra["publishingRepositoryUrl"]}")
+                }
+            }
+        }
+
+        // Doc https://docs.gradle.org/current/userguide/signing_plugin.html#sec:signatory_credentials
+        // Details in https://github.com/bric3/fireplace/issues/25
+        configure<SigningExtension> {
+            setRequired({ gradle.taskGraph.hasTask("publish") })
+            useInMemoryPgpKeys(findProperty("signingKey") as? String, findProperty("signingPassword") as? String)
+            sign(the<PublishingExtension>().publications["maven"])
+        }
+    }
 }
 
 tasks {
+    create("v") {
+        doLast {
+            println("Version : ${project.version}")
+        }
+    }
+
     register<de.undercouch.gradle.tasks.download.Download>("downloadFile") {
         src("https://zenodo.org/record/3227177/files/SSH.tar.gz")
         dest(File(buildDir, "SSH.tar.gz"))
@@ -70,22 +188,22 @@ license {
     strictCheck = true
     ignoreFailures = false
     excludes(
-            listOf(
-                    "**/3-lines.txt"
-            )
+        listOf(
+            "**/3-lines.txt"
+        )
     )
 
     mapping(
-            mapOf(
-                    "java" to "SLASHSTAR_STYLE",
-                    "kt" to "SLASHSTAR_STYLE",
-                    "kts" to "SLASHSTAR_STYLE",
-                    "yaml" to "SCRIPT_STYLE",
-                    "yml" to "SCRIPT_STYLE",
-                    "svg" to "XML_STYLE",
-                    "md" to "XML_STYLE",
-                    "toml" to "SCRIPT_STYLE"
-            )
+        mapOf(
+            "java" to "SLASHSTAR_STYLE",
+            "kt" to "SLASHSTAR_STYLE",
+            "kts" to "SLASHSTAR_STYLE",
+            "yaml" to "SCRIPT_STYLE",
+            "yml" to "SCRIPT_STYLE",
+            "svg" to "XML_STYLE",
+            "md" to "XML_STYLE",
+            "toml" to "SCRIPT_STYLE"
+        )
     )
 }
 tasks {

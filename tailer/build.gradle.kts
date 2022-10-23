@@ -13,6 +13,8 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
+description = "Tail application based on drain-java"
+
 dependencies {
     implementation(projects.drainJavaCore)
     implementation(projects.drainJavaJackson)

@@ -10,7 +10,10 @@
 
 plugins {
     `java-library`
+    `maven-publish`
 }
+
+description = "Drain Java Implementation"
 
 dependencies {
     implementation(libs.jsr305)

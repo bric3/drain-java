@@ -10,7 +10,10 @@
 
 plugins {
     `java-library`
+    `maven-publish`
 }
+
+description = "Drain Java Jackson Serialization"
 
 dependencies {
     implementation(projects.drainJavaCore)
