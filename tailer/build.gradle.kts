@@ -29,7 +29,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("com.github.bric3.tailer.TailerMain")
+    mainClass.set("io.github.bric3.tailer.TailerMain")
 }
 
 val JAVA_VERSION = 19

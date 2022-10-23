@@ -31,7 +31,7 @@ release {
 val gradleExtensionsId = libs.plugins.gradle.extensions.get().pluginId
 allprojects {
     plugins.apply(gradleExtensionsId)
-    group = "com.github.bric3.drain"
+    group = "io.github.bric3.drain"
 
     repositories {
         mavenCentral()
@@ -134,6 +134,11 @@ allprojects {
         }
 
         tasks {
+            named("clean") {
+                doLast {
+                    delete("${project.buildDir}/publishing-repository")
+                }
+            }
             withType(Jar::class) {
                 metaInf.with(licenseSpec)
                 manifest.attributes(
