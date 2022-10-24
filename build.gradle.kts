@@ -1,5 +1,3 @@
-import nebula.plugin.release.git.opinion.Strategies
-
 /*
  * drain-java
  *
@@ -9,6 +7,8 @@ import nebula.plugin.release.git.opinion.Strategies
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+import nebula.plugin.release.git.opinion.Strategies
+
 fun properties(key: String, defaultValue: Any? = null) = (project.findProperty(key) ?: defaultValue).toString()
 
 plugins {
