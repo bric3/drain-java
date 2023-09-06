@@ -38,7 +38,7 @@ jobs:
 #      run: |
 #        ls build
 
-    - uses: mikepenz/action-junit-report@v3
+    - uses: mikepenz/action-junit-report@v4
       if: ${{ always() }}
       name: Publish Test Report
       with:
