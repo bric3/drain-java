@@ -16,7 +16,7 @@ plugins {
     alias(libs.plugins.license)
     alias(libs.plugins.download)
     alias(libs.plugins.gradle.extensions) apply false
-    id("nebula.release") version "18.0.0"
+    id("nebula.release") version "18.0.1"
 
 }
 
