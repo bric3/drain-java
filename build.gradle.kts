@@ -16,7 +16,8 @@ plugins {
     alias(libs.plugins.license)
     alias(libs.plugins.download)
     alias(libs.plugins.gradle.extensions) apply false
-    id("nebula.release") version "18.0.8"
+    alias(libs.plugins.nebula.release)
+//    id("nebula.release") version "18.0.8"
 
 }
 
@@ -176,7 +177,7 @@ allprojects {
 }
 
 tasks {
-    create("v") {
+    register("v") {
         doLast {
             println("Version : ${project.version}")
         }
