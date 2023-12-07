@@ -32,7 +32,7 @@ application {
     mainClass.set("io.github.bric3.tailer.TailerMain")
 }
 
-val JAVA_VERSION = 19
+val JAVA_VERSION = 21
 
 java {
     toolchain {
