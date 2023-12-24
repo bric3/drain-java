@@ -9,7 +9,7 @@
 #
 
 [versions]
-jackson = "2.16.0"
+jackson = "2.16.1"
 picocli = "4.7.5"
 guava = "30.1.1-jre"
 
