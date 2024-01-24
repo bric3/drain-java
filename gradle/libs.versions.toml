@@ -38,7 +38,7 @@ jackson = ["jackson-core", "jackson-annotations", "jackson-databind"]
 [plugins]
 download = { id = "de.undercouch.download", version = "5.5.0" }
 shadow = { id = "com.github.johnrengelman.shadow", version = "8.1.1" }
-versions = { id = "com.github.ben-manes.versions", version = "0.50.0" }
+versions = { id = "com.github.ben-manes.versions", version = "0.51.0" }
 license = { id = "com.github.hierynomus.license", version = "0.16.1" }
 gradle-extensions = { id = "com.github.vlsi.gradle-extensions", version = "1.90" }
 nebula-release = { id = "nebula.release", version = "18.0.8" }
