@@ -1,72 +1,111 @@
 name: Master Build
-on: 
+on:
+  workflow_dispatch:
+
   push:
     branches: [ master ]
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
 
   pull_request:
     branches: [ master ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: true
+
 jobs:
+  gradleValidation:
+    name: Gradle Wrapper
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v4
+
+      - name: Gradle Wrapper Validation
+        uses: gradle/wrapper-validation-action@v2
+        with:
+          min-wrapper-count: 0
+
   build:
-    continue-on-error: ${{ matrix.experimental }}
-    name: Build on ${{ matrix.os }}
+    name: Build ${{ matrix.tag }}
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ matrix.ignore-errors }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        experimental: [false]
+        os: ['linux']
+        arch: ['amd64']
+        runner: ['ubuntu-latest']
+        tag: ['linux-amd64']
+        ignore-errors: [false]
         include:
-          - os: windows-latest
-            experimental: true
-          - os: macos-latest
-            experimental: true
-    runs-on: ${{ matrix.os }}
+          - os: macos
+            runner: macos-latest
+            arch: amd64
+            tag: darwin-amd64
+            ignore-errors: true
+          - os: macos
+            runner: macos-14
+            arch: aarch64
+            tag: darwin-aarch64
+            ignore-errors: true
+          - os: windows
+            runner: windows-latest
+            arch: amd64
+            tag: windows-amd64
+            ignore-errors: true
+
     steps:
     - uses: actions/checkout@v4
-    - uses: gradle/wrapper-validation-action@v2
     - name: Setup JVM
       uses: actions/setup-java@v4
       with:
         distribution : zulu
         java-version: |
-          19
+          21
           17
     - name : Setup Gradle
-      uses : gradle/gradle-build-action@v2
+      uses : gradle/actions/setup-gradle@v3
     - run: ./gradlew build
 #    - name: list build directory
 #      if: ${{ always() }}
 #      run: |
 #        ls build
 
-    - uses: mikepenz/action-junit-report@v4
-      if: ${{ always() }}
-      name: Publish Test Report
+    - name: Upload Test Report
+      uses: actions/upload-artifact@v4
+      if: always() # always run even if the previous step fails
       with:
-        check_name: Test Report - ${{ matrix.os }}
-        report_paths: '**/build/test-results/test/TEST-*.xml'
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        name: junit-test-results-${{ matrix.tag }}
+        path: '**/build/test-results/test/TEST-*.xml'
+        retention-days: 1
 
+  # This job will update the PR with the JUnit report
+  # In order to be able to make the most of it this job in particular has
+  # augmented permissions.
+  junit-report:
+    name: JUnit Report ${{ matrix.tag }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        tag: ['linux-amd64', 'darwin-amd64', 'darwin-aarch64', 'windows-amd64']
+    if: |
+      success() || failure()
+    needs: [ build ]
+    permissions:
+      checks: write # for mikepenz/action-junit-report
 
-#  publish-test-results:
-#    name: "Publish Unit Tests Results"
-#    needs: gradle
-#    runs-on: ubuntu-latest
-#    # the build-and-test job might be skipped, we don't need to run this job then
-#    if: success() || failure()
-#
-#    steps:
-#      - name: Download Artifacts
-#        uses: actions/download-artifact@v2
-#        with:
-#          path: artifacts
-#
-#      - name: Publish Unit Test Results
-#        uses: EnricoMi/publish-unit-test-result-action@v1.6
-#        with:
-#          check_name: Unit Test Results
-#          github_token: ${{ secrets.GITHUB_TOKEN }}
-#          files: pytest.xml
-
+    steps:
+      - name: Download Test Report
+        uses: actions/download-artifact@v4
+        with:
+          name: junit-test-results-${{ matrix.tag }}
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v4
+        with:
+          check_name: Test Report - ${{ matrix.tag }}
+          commit: ${{github.event.workflow_run.head_sha}}
+          report_paths: '**/build/test-results/test/TEST-*.xml'
 
   publish:
     name: Publish snapshots
@@ -77,16 +116,15 @@ jobs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - uses: gradle/wrapper-validation-action@v2
     - name: Setup JVM
       uses: actions/setup-java@v4
       with:
         distribution : zulu
         java-version: |
-          19
+          21
           17
     - name : Setup Gradle
-      uses : gradle/gradle-build-action@v2
+      uses : gradle/actions/setup-gradle@v3
     - run: ./gradlew snapshot -Ppublish.central=true
       env:
         ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
