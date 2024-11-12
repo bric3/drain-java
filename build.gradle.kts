@@ -121,7 +121,7 @@ allprojects {
                         }
                     } else {
                         name = "build-dir"
-                        url = uri("${rootProject.buildDir}/publishing-repository")
+                        url = uri(rootProject.layout.buildDirectory.file("publishing-repository"))
                     }
                     project.extra["publishingRepositoryUrl"] = url
                 }
@@ -135,7 +135,7 @@ allprojects {
         tasks {
             named("clean") {
                 doLast {
-                    delete("${project.buildDir}/publishing-repository")
+                    delete(rootProject.layout.buildDirectory.file("publishing-repository"))
                 }
             }
             withType(Jar::class) {
@@ -183,14 +183,14 @@ tasks {
 
     register<de.undercouch.gradle.tasks.download.Download>("downloadFile") {
         src("https://zenodo.org/record/3227177/files/SSH.tar.gz")
-        dest(File(buildDir, "SSH.tar.gz"))
+        dest(layout.buildDirectory.file("SSH.tar.gz"))
         onlyIfModified(true)
     }
 
     register<Copy>("unpackFile") {
         dependsOn("downloadFile")
-        from(tarTree(File(buildDir, "SSH.tar.gz")))
-        into(buildDir)
+        from(tarTree(layout.buildDirectory.file("SSH.tar.gz")))
+        into(layout.buildDirectory)
     }
 }
 
