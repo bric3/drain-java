@@ -14,7 +14,7 @@ picocli = "4.7.7"
 guava = "30.1.1-jre"
 
 assertj = "3.27.3"
-junit = "5.12.2"
+junit = "5.13.0"
 
 [libraries]
 
