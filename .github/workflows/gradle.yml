@@ -62,7 +62,7 @@ jobs:
         git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
         git config --global user.name "$GITHUB_ACTOR"
     - name: Setup JVM
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution : zulu
         java-version: |
@@ -121,7 +121,7 @@ jobs:
       with:
         fetch-depth: 0
     - name: Setup JVM
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         distribution : zulu
         java-version: |
