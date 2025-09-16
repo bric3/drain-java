@@ -10,6 +10,7 @@
 
 [versions]
 jackson = "2.20.0"
+jackson-annotations = "2.19.0"
 picocli = "4.7.7"
 guava = "30.1.1-jre"
 
@@ -24,7 +25,7 @@ picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 picocli-codegen = { module = "info.picocli:picocli-codegen", version.ref = "picocli" }
 
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
-jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson" }
+jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson-annotations" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version = "2.20.0" }
 
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
