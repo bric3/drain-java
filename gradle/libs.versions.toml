@@ -16,6 +16,7 @@ guava = "30.1.1-jre"
 
 assertj = "3.27.6"
 junit = "5.14.0"
+junit-launcher = "1.14.0"
 
 [libraries]
 
@@ -32,6 +33,7 @@ assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-launcher" }
 
 [bundles]
 jackson = ["jackson-core", "jackson-annotations", "jackson-databind"]
