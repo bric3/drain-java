@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Fetch Sources
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Gradle Wrapper Validation
         uses: gradle/actions/wrapper-validation@v5
@@ -56,7 +56,7 @@ jobs:
             ignore-errors: true
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Set up Git
       run: |
         git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
@@ -117,7 +117,7 @@ jobs:
     needs: build
     if: success() && github.event_name != 'pull_request' && github.ref == 'refs/heads/master'
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         fetch-depth: 0
     - name: Setup JVM
