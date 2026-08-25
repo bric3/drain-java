@@ -9,7 +9,7 @@
 #
 
 [versions]
-jackson = "2.22.1"
+jackson = "2.22.2"
 jackson-annotations = "2.22"
 picocli = "4.7.7"
 guava = "30.1.1-jre"
@@ -27,7 +27,7 @@ picocli-codegen = { module = "info.picocli:picocli-codegen", version.ref = "pico
 
 jackson-core = { module = "com.fasterxml.jackson.core:jackson-core", version.ref = "jackson" }
 jackson-annotations = { module = "com.fasterxml.jackson.core:jackson-annotations", version.ref = "jackson-annotations" }
-jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version = "2.22.1" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version = "2.22.2" }
 
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
 
@@ -44,4 +44,4 @@ shadow = { id = "com.gradleup.shadow", version = "9.6.1" }
 versions = { id = "com.github.ben-manes.versions", version = "0.61.0" }
 license = { id = "com.github.hierynomus.license", version = "0.16.1" }
 gradle-extensions = { id = "com.github.vlsi.gradle-extensions", version = "3.0.2" }
-nebula-release = { id = "nebula.release", version = "21.0.1" }
+nebula-release = { id = "nebula.release", version = "21.0.2" }
