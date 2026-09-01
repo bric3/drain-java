@@ -44,4 +44,4 @@ shadow = { id = "com.gradleup.shadow", version = "9.6.1" }
 versions = { id = "com.github.ben-manes.versions", version = "0.61.0" }
 license = { id = "com.github.hierynomus.license", version = "0.16.1" }
 gradle-extensions = { id = "com.github.vlsi.gradle-extensions", version = "3.0.2" }
-nebula-release = { id = "nebula.release", version = "21.0.2" }
+nebula-release = { id = "nebula.release", version = "21.1.0" }
