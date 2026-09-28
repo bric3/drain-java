@@ -9,7 +9,7 @@
  */
 plugins {
     id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
-    id("com.gradle.develocity") version "4.5.1"
+    id("com.gradle.develocity") version "4.6.0"
 }
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
